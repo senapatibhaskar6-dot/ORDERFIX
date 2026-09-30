@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --brand-navy: #0B2545;
+    --brand-teal: #00B686;
+  }
+
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Mobile Compact Mode for viewing entire screen at once */
+.compact-mode {
+  font-size: 13px;
+}
+
+.compact-mode input,
+.compact-mode select,
+.compact-mode button {
+  font-size: 12px;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-voucher, #printable-voucher *,
+  #printable-police-report, #printable-police-report * {
+    visibility: visible;
+  }
+  #printable-voucher, #printable-police-report {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}

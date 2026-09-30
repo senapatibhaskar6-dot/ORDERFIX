@@ -1,0 +1,6 @@
+{
+  "name": "Orderfix - Hotel & Homestay Booking Manager",
+  "description": "Ultra-simple, pocket-friendly booking manager to prevent double bookings between online and offline channels for small hotels, resorts, and homestays.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
