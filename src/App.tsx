@@ -12,6 +12,12 @@ import {
   saveBookings,
   loadHotel,
   saveHotel,
+  loadHotels,
+  saveHotels,
+  loadActiveHotelId,
+  saveActiveHotelId,
+  isHotelRegistered,
+  setHotelRegistered,
   loadSubscription,
   saveSubscription,
   loadExpenses,
@@ -21,7 +27,8 @@ import {
   getTodayString,
   generateInitialBookings,
   DEFAULT_ROOMS,
-  DEFAULT_HOTEL
+  DEFAULT_HOTEL,
+  DEFAULT_HOTELS
 } from './utils/storage';
 import { Navbar } from './components/Navbar';
 import { PricingBanner } from './components/PricingBanner';
@@ -39,6 +46,7 @@ import { CustomerGuestView } from './components/CustomerGuestView';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { HotelAccounting } from './components/HotelAccounting';
 import { PoliceVerificationView } from './components/PoliceVerificationView';
+import { RegistrationScreen } from './components/RegistrationScreen';
 import {
   LayoutGrid,
   List,
@@ -54,10 +62,20 @@ import {
 } from 'lucide-react';
 
 export default function App() {
+  // Multi-Vendor Hotels List
+  const [hotels, setHotels] = useState<HotelProfile[]>(() => loadHotels());
+  const [activeHotelId, setActiveHotelId] = useState<string>(() => loadActiveHotelId());
+
+  // Registration Status & New Property Onboarding
+  const [isRegistered, setIsRegistered] = useState<boolean>(() => isHotelRegistered());
+  const [isRegisteringNewHotel, setIsRegisteringNewHotel] = useState(false);
+
+  // Active Hotel Entity
+  const hotel = hotels.find((h) => h.id === activeHotelId) || hotels[0] || DEFAULT_HOTEL;
+
   // Global State
   const [rooms, setRooms] = useState<Room[]>(() => loadRooms());
   const [bookings, setBookings] = useState<Booking[]>(() => loadBookings());
-  const [hotel, setHotel] = useState<HotelProfile>(() => loadHotel());
   const [subscription, setSubscription] = useState<SubscriptionState>(() => loadSubscription());
   const [expenses, setExpenses] = useState<Expense[]>(() => loadExpenses());
   const [verifications, setVerifications] = useState<GuestVerificationData[]>(() => loadVerifications());
@@ -135,8 +153,12 @@ export default function App() {
   }, [bookings]);
 
   useEffect(() => {
-    saveHotel(hotel);
-  }, [hotel]);
+    saveHotels(hotels);
+  }, [hotels]);
+
+  useEffect(() => {
+    saveActiveHotelId(activeHotelId);
+  }, [activeHotelId]);
 
   useEffect(() => {
     saveSubscription(subscription);
@@ -150,14 +172,52 @@ export default function App() {
     saveVerifications(verifications);
   }, [verifications]);
 
+  // Hotel Multi-Vendor Switcher Handler
+  const handleSelectHotel = (hotelId: string) => {
+    setActiveHotelId(hotelId);
+    saveActiveHotelId(hotelId);
+    const selected = hotels.find((h) => h.id === hotelId);
+    if (selected) {
+      saveHotel(selected);
+      showToast(`সক্ৰিয় হোটেল: ${selected.name}`, 'info');
+    }
+  };
+
+  // Registration Complete Handler
+  const handleCompleteRegistration = (newHotelData: HotelProfile, newRoomsData: Room[]) => {
+    const updatedHotels = [newHotelData, ...hotels.filter((h) => h.id !== newHotelData.id)];
+    setHotels(updatedHotels);
+    saveHotels(updatedHotels);
+    setActiveHotelId(newHotelData.id);
+    saveActiveHotelId(newHotelData.id);
+    saveHotel(newHotelData);
+
+    if (newRoomsData.length > 0) {
+      const updatedRooms = [...rooms, ...newRoomsData];
+      setRooms(updatedRooms);
+      saveRooms(updatedRooms);
+    }
+
+    setHotelRegistered(true);
+    setIsRegistered(true);
+    setIsRegisteringNewHotel(false);
+
+    showToast(`🎉 ${newHotelData.name} পঞ্জীয়ন সফল হ'ল! ₹৯৯ এণ্ট্ৰী মাচুল পৰিশোধিত & ১ম মাহ বিনামূলীয়া চাবস্ক্ৰিপচন সক্ৰিয়!`, 'success');
+  };
+
   // Handlers
   const handleSaveBooking = (newBooking: Booking, sendWhatsAppNow: boolean) => {
-    setBookings((prev) => [newBooking, ...prev]);
-    showToast(`✅ Room ${newBooking.roomNumber} বুক হ'ল! (${newBooking.guestName})`, 'success');
+    const taggedBooking: Booking = {
+      ...newBooking,
+      hotelId: newBooking.hotelId || hotel.id
+    };
+
+    setBookings((prev) => [taggedBooking, ...prev]);
+    showToast(`✅ Room ${taggedBooking.roomNumber} বুক হ'ল! (${taggedBooking.guestName})`, 'success');
 
     if (sendWhatsAppNow) {
       setTimeout(() => {
-        setWhatsAppBooking(newBooking);
+        setWhatsAppBooking(taggedBooking);
       }, 300);
     }
   };
@@ -179,59 +239,63 @@ export default function App() {
         b.id === bookingId ? { ...b, status: 'checked_out' } : b
       )
     );
-    showToast('Guest checked out successfully! Room is now free.', 'success');
-  };
-
-  const handleAddExpense = (newExp: Expense) => {
-    setExpenses((prev) => [newExp, ...prev]);
-    showToast(`✅ খৰচ যোগ কৰা হ'ল: ₹${newExp.amount} (${newExp.title})`, 'info');
-  };
-
-  const handleDeleteExpense = (expId: string) => {
-    setExpenses((prev) => prev.filter((e) => e.id !== expId));
-    showToast('খৰচ আঁতৰোৱা হ\'ল', 'warning');
-  };
-
-  const handleAddVerification = (newV: GuestVerificationData) => {
-    setVerifications((prev) => [newV, ...prev]);
-    showToast(`✅ ${newV.guestName}-ৰ আই-ডি পুলিচ বহীত সংৰক্ষণ হ'ল!`, 'success');
-  };
-
-  const handleUpdateVerification = (updatedV: GuestVerificationData) => {
-    setVerifications((prev) => prev.map((v) => (v.id === updatedV.id ? updatedV : v)));
-    showToast(`তথ্য আপডেট হ'ল (${updatedV.guestName})`, 'info');
-  };
-
-  const handleDeleteVerification = (id: string) => {
-    setVerifications((prev) => prev.filter((v) => v.id !== id));
-    showToast('অতিথিৰ পুলিচ ৰেকৰ্ড আঁতৰোৱা হ\'ল', 'warning');
-  };
-
-  const handleUpdateHotelProfile = (updated: HotelProfile) => {
-    setHotel(updated);
-    saveHotel(updated);
-    showToast('থানা আৰু হোটেলৰ তথ্য সংৰক্ষণ কৰা হ\'ল!', 'success');
+    showToast('Guest checked out successfully!', 'success');
   };
 
   const handleQuickBookRoom = (room: Room) => {
-    if (room.isMaintenance) {
-      setRooms((prev) =>
-        prev.map((r) => (r.id === room.id ? { ...r, isMaintenance: false } : r))
-      );
-      showToast(`Room ${room.roomNumber} marked clean & available!`, 'success');
-      return;
-    }
     setPreselectedRoomForBooking(room);
     setIsAddBookingOpen(true);
   };
 
-  const handleViewBooking = (booking: Booking, room?: Room) => {
+  const handleViewBooking = (booking: Booking) => {
+    const room = rooms.find((r) => r.id === booking.roomId) || null;
     setSelectedBookingForDetails(booking);
-    setSelectedRoomForDetails(room || rooms.find((r) => r.id === booking.roomId) || null);
+    setSelectedRoomForDetails(room);
+  };
+
+  const handleAddExpense = (newExp: Expense) => {
+    const taggedExpense = {
+      ...newExp,
+      hotelId: hotel.id
+    };
+    setExpenses((prev) => [taggedExpense, ...prev]);
+    showToast(`খৰচ লিপিবদ্ধ হ'ল: ₹${newExp.amount.toLocaleString('en-IN')}`, 'success');
+  };
+
+  const handleDeleteExpense = (expId: string) => {
+    setExpenses((prev) => prev.filter((e) => e.id !== expId));
+    showToast('খৰচ মচি পেলোৱা হ’ল', 'warning');
+  };
+
+  const handleAddVerification = (newV: GuestVerificationData) => {
+    const taggedVerification = {
+      ...newV,
+      hotelId: hotel.id
+    };
+    setVerifications((prev) => [taggedVerification, ...prev]);
+    showToast(`পুলিচ ৰিপৰ্ট যোগ হ'ল (${newV.guestName})`, 'success');
+  };
+
+  const handleUpdateVerification = (updatedV: GuestVerificationData) => {
+    setVerifications((prev) => prev.map((v) => (v.id === updatedV.id ? updatedV : v)));
+    showToast(`পুলিচ ৰিপৰ্ট আপডেট হ'ল (${updatedV.guestName})`, 'info');
+  };
+
+  const handleDeleteVerification = (id: string) => {
+    setVerifications((prev) => prev.filter((v) => v.id !== id));
+    showToast('পুলিচ ৰিপৰ্ট মচি দিয়া হ’ল', 'warning');
+  };
+
+  const handleUpdateHotelProfile = (updatedProfile: HotelProfile) => {
+    const updatedHotels = hotels.map((h) => (h.id === updatedProfile.id ? updatedProfile : h));
+    setHotels(updatedHotels);
+    saveHotels(updatedHotels);
+    saveHotel(updatedProfile);
+    showToast('হোটেলৰ তথ্য সংৰক্ষণ কৰা হ’ল', 'success');
   };
 
   const handleResetDemoData = () => {
-    if (confirm('Reset to initial sample rooms and bookings for demonstration?')) {
+    if (confirm('Reset to standard sample rooms & test reservations?')) {
       const freshRooms = DEFAULT_ROOMS;
       const freshBookings = generateInitialBookings();
       setRooms(freshRooms);
@@ -242,18 +306,36 @@ export default function App() {
     }
   };
 
-  // If Customer / Guest View is toggled active, display the guest-facing mobile portal!
+  // Filter rooms for the active hotel
+  const activeRooms = rooms.filter((r) => !r.hotelId || r.hotelId === hotel.id);
+  const activeBookings = bookings.filter((b) => !b.hotelId || b.hotelId === hotel.id);
+
+  // 1. FIRST-TIME REGISTRATION OR ONBOARDING NEW PROPERTY
+  if (!isRegistered || isRegisteringNewHotel) {
+    return (
+      <RegistrationScreen
+        onCompleteRegistration={handleCompleteRegistration}
+        onCancel={isRegisteringNewHotel ? () => setIsRegisteringNewHotel(false) : undefined}
+      />
+    );
+  }
+
+  // 2. CUSTOMER / GUEST MARKETPLACE VIEW
   if (isCustomerViewActive) {
     return (
       <CustomerGuestView
-        hotel={hotel}
+        hotels={hotels}
+        activeHotel={hotel}
+        onSelectHotel={handleSelectHotel}
         rooms={rooms}
         bookings={bookings}
+        onSaveBooking={handleSaveBooking}
         onBackToOwner={() => setIsCustomerViewActive(false)}
       />
     );
   }
 
+  // 3. HOTEL OWNER DASHBOARD & DUAL-BOOKING MANAGEMENT
   return (
     <div className={`min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans pb-24 md:pb-0 overflow-x-hidden w-full max-w-full ${isCompactMode ? 'compact-mode' : ''}`}>
       
@@ -286,6 +368,9 @@ export default function App() {
       {/* Main Navigation Bar */}
       <Navbar
         hotel={hotel}
+        hotels={hotels}
+        onSelectHotel={handleSelectHotel}
+        onOpenNewHotelRegistration={() => setIsRegisteringNewHotel(true)}
         subscription={subscription}
         selectedDate={selectedDate}
         isCompactMode={isCompactMode}
@@ -360,15 +445,15 @@ export default function App() {
 
         {/* Dashboard Overview Cards */}
         <MetricsCards
-          rooms={rooms}
-          bookings={bookings}
+          rooms={activeRooms}
+          bookings={activeBookings}
           selectedDate={selectedDate}
           activeFilter={activeMetricFilter}
           onSelectFilter={setActiveMetricFilter}
           isCompactMode={isCompactMode}
         />
 
-        {/* View Switcher Bar (ৰূম গ্ৰিড | তালিকা | হিচাপ-নিকাশ | পুলিচ ভেৰিফিকেচন) */}
+        {/* View Switcher Bar */}
         <div className="flex items-center justify-between mt-3 mb-2 flex-wrap gap-2">
           <div className="flex items-center gap-1 bg-slate-200/90 p-0.5 sm:p-1 rounded-xl flex-wrap">
             <button
@@ -392,7 +477,7 @@ export default function App() {
               }`}
             >
               <List className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              <span>তালিকা ({bookings.length})</span>
+              <span>তালিকা ({activeBookings.length})</span>
             </button>
 
             {/* ACCOUNTING TAB */}
@@ -405,7 +490,7 @@ export default function App() {
               }`}
             >
               <DollarSign className="w-3.5 h-3.5 text-amber-800" />
-              <span>হিচাপ (Accounting 📊)</span>
+              <span>হিচাপ & ৫% কমিছন (Accounting 📊)</span>
             </button>
 
             {/* POLICE VERIFICATION TAB */}
@@ -437,8 +522,8 @@ export default function App() {
         {activeViewTab === 'grid' ? (
           <div className="mt-2">
             <RoomGrid
-              rooms={rooms}
-              bookings={bookings}
+              rooms={activeRooms}
+              bookings={activeBookings}
               selectedDate={selectedDate}
               activeFilter={activeMetricFilter}
               onQuickBookRoom={handleQuickBookRoom}
@@ -451,8 +536,8 @@ export default function App() {
             {/* Also show recent table below grid for convenience on desktop */}
             <div className="hidden md:block mt-6">
               <BookingsTable
-                bookings={bookings}
-                rooms={rooms}
+                bookings={activeBookings}
+                rooms={activeRooms}
                 onViewBooking={handleViewBooking}
                 onOpenWhatsApp={(b) => setWhatsAppBooking(b)}
                 onCheckOutBooking={handleCheckOutBooking}
@@ -463,8 +548,8 @@ export default function App() {
         ) : activeViewTab === 'table' ? (
           <div className="mt-2">
             <BookingsTable
-              bookings={bookings}
-              rooms={rooms}
+              bookings={activeBookings}
+              rooms={activeRooms}
               onViewBooking={handleViewBooking}
               onOpenWhatsApp={(b) => setWhatsAppBooking(b)}
               onCheckOutBooking={handleCheckOutBooking}
@@ -473,9 +558,9 @@ export default function App() {
           </div>
         ) : activeViewTab === 'accounting' ? (
           <div className="mt-2">
-            {/* DEDICATED HOTEL ACCOUNTING & REVENUE LEDGER */}
+            {/* DEDICATED HOTEL ACCOUNTING, COMMISSION & REVENUE LEDGER */}
             <HotelAccounting
-              bookings={bookings}
+              bookings={activeBookings}
               hotel={hotel}
               expenses={expenses}
               onAddExpense={handleAddExpense}
@@ -488,8 +573,8 @@ export default function App() {
             {/* DEDICATED POLICE VERIFICATION & GUEST REPORTING MODULE */}
             <PoliceVerificationView
               hotel={hotel}
-              bookings={bookings}
-              rooms={rooms}
+              bookings={activeBookings}
+              rooms={activeRooms}
               verifications={verifications}
               onAddVerification={handleAddVerification}
               onUpdateVerification={handleUpdateVerification}
@@ -510,7 +595,7 @@ export default function App() {
           setIsAddBookingOpen(true);
         }}
         onOpenCustomerView={() => setIsCustomerViewActive(true)}
-        bookingsCount={bookings.length}
+        bookingsCount={activeBookings.length}
       />
 
       {/* Footer (Desktop) */}
@@ -518,121 +603,92 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="font-extrabold text-slate-900">ORDERFIX</span>
-            <span>• Pocket-friendly Booking Sync for Small Hotels, Homestays & Resorts</span>
+            <span>• মাল্টি-ভেণ্ডৰ হোটেল ব্যৱস্থাপনা, চাবস্ক্ৰিপচন & ৫% প্লেটফৰ্ম কমিছন প্লেটফৰ্ম</span>
           </div>
-          <div className="flex items-center gap-4 text-[11px] flex-wrap">
-            <button
-              onClick={() => setActiveViewTab('police')}
-              className="text-rose-800 hover:text-rose-950 font-bold underline cursor-pointer"
-            >
-              পুলিচ ৰিপৰ্ট (Police Log 👮)
-            </button>
-            <button
-              onClick={() => setActiveViewTab('accounting')}
-              className="text-amber-800 hover:text-amber-950 font-bold underline cursor-pointer"
-            >
-              হোটেল হিচাপ (Accounting 📊)
-            </button>
-            <button
-              onClick={() => setIsPricingOpen(true)}
-              className="text-teal-700 hover:text-teal-900 font-bold underline cursor-pointer"
-            >
-              Pricing Details
-            </button>
-            <button
-              onClick={() => setIsHotelSettingsOpen(true)}
-              className="text-slate-600 hover:text-slate-900 font-medium cursor-pointer"
-            >
-              Property Settings
-            </button>
-            <button
-              onClick={() => setIsCustomerViewActive(true)}
-              className="text-emerald-700 hover:text-emerald-900 font-bold cursor-pointer"
-            >
-              Guest Mobile View 📱
-            </button>
+          <div className="text-[11px] text-slate-400">
+            Assam Police Form-C / Daily Register Compliant • Pocket-Friendly
           </div>
         </div>
       </footer>
 
-      {/* MODALS */}
-      
-      {/* 1. Dual Booking Mode Form */}
+      {/* Add Booking Modal */}
       <AddBookingModal
         isOpen={isAddBookingOpen}
-        onClose={() => {
-          setIsAddBookingOpen(false);
-          setPreselectedRoomForBooking(null);
-        }}
-        rooms={rooms}
-        bookings={bookings}
+        onClose={() => setIsAddBookingOpen(false)}
+        rooms={activeRooms}
+        bookings={activeBookings}
         preselectedRoom={preselectedRoomForBooking}
         defaultDate={selectedDate}
         onSaveBooking={handleSaveBooking}
       />
 
-      {/* 2. Booking Details & Status Modal */}
-      <BookingDetailsModal
-        isOpen={!!selectedBookingForDetails}
-        onClose={() => {
-          setSelectedBookingForDetails(null);
-          setSelectedRoomForDetails(null);
+      {/* Booking Details Modal */}
+      {selectedBookingForDetails && (
+        <BookingDetailsModal
+          isOpen={!!selectedBookingForDetails}
+          onClose={() => setSelectedBookingForDetails(null)}
+          booking={selectedBookingForDetails}
+          room={selectedRoomForDetails}
+          hotel={hotel}
+          onUpdateBooking={handleUpdateBooking}
+          onDeleteBooking={handleDeleteBooking}
+          onOpenWhatsApp={(b) => setWhatsAppBooking(b)}
+          onPrintSlip={(b) => setPrintSlipBooking(b)}
+        />
+      )}
+
+      {/* WhatsApp Message Preview Modal */}
+      {whatsAppBooking && (
+        <WhatsAppPreviewModal
+          isOpen={!!whatsAppBooking}
+          onClose={() => setWhatsAppBooking(null)}
+          booking={whatsAppBooking}
+          hotel={hotel}
+        />
+      )}
+
+      {/* Print Slip Modal */}
+      {printSlipBooking && (
+        <PrintSlipModal
+          isOpen={!!printSlipBooking}
+          onClose={() => setPrintSlipBooking(null)}
+          booking={printSlipBooking}
+          hotel={hotel}
+        />
+      )}
+
+      {/* Room Manager Modal */}
+      <RoomManagerModal
+        isOpen={isRoomManagerOpen}
+        onClose={() => setIsRoomManagerOpen(false)}
+        rooms={rooms}
+        hotelId={hotel.id}
+        onUpdateRooms={(newRooms) => {
+          setRooms(newRooms);
+          saveRooms(newRooms);
+          showToast('কোঠাৰ তালিকা আপডেট হ’ল', 'success');
         }}
-        booking={selectedBookingForDetails}
-        room={selectedRoomForDetails}
-        hotel={hotel}
-        onUpdateBooking={handleUpdateBooking}
-        onDeleteBooking={handleDeleteBooking}
-        onOpenWhatsApp={(b) => setWhatsAppBooking(b)}
-        onPrintSlip={(b) => setPrintSlipBooking(b)}
       />
 
-      {/* 3. WhatsApp Direct Preview & Sender Modal */}
-      <WhatsAppPreviewModal
-        isOpen={!!whatsAppBooking}
-        onClose={() => setWhatsAppBooking(null)}
-        booking={whatsAppBooking}
+      {/* Hotel Settings Modal */}
+      <HotelSettingsModal
+        isOpen={isHotelSettingsOpen}
+        onClose={() => setIsHotelSettingsOpen(false)}
         hotel={hotel}
+        onSaveHotel={(updatedHotel) => {
+          handleUpdateHotelProfile(updatedHotel);
+        }}
       />
 
-      {/* 4. Guest Check-in Pass / Receipt Print Slip Modal */}
-      <PrintSlipModal
-        isOpen={!!printSlipBooking}
-        onClose={() => setPrintSlipBooking(null)}
-        booking={printSlipBooking}
-        hotel={hotel}
-      />
-
-      {/* 5. Subscription & Pricing Modal (₹99/mo or ₹999/yr) */}
+      {/* Pricing & Subscription Modal */}
       <PricingModal
         isOpen={isPricingOpen}
         onClose={() => setIsPricingOpen(false)}
         subscription={subscription}
         onUpdateSubscription={(newSub) => {
           setSubscription(newSub);
-          showToast('Pro Plan active! Thank you for supporting Orderfix.', 'success');
-        }}
-      />
-
-      {/* 6. Room Inventory & Tariff Manager */}
-      <RoomManagerModal
-        isOpen={isRoomManagerOpen}
-        onClose={() => setIsRoomManagerOpen(false)}
-        rooms={rooms}
-        onUpdateRooms={(updated) => {
-          setRooms(updated);
-          showToast('Room inventory updated.', 'info');
-        }}
-      />
-
-      {/* 7. Hotel Profile & WhatsApp Settings */}
-      <HotelSettingsModal
-        isOpen={isHotelSettingsOpen}
-        onClose={() => setIsHotelSettingsOpen(false)}
-        hotel={hotel}
-        onSaveHotel={(updated) => {
-          setHotel(updated);
-          showToast('Property settings saved.', 'success');
+          saveSubscription(newSub);
+          showToast('Subscription plan updated!', 'success');
         }}
       />
 

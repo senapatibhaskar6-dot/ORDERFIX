@@ -10,7 +10,10 @@ import {
   Smartphone,
   CreditCard,
   Check,
-  Star
+  Star,
+  Lock,
+  Building,
+  DollarSign
 } from 'lucide-react';
 import { OrderfixLogo } from './Logo';
 
@@ -61,16 +64,16 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           <div className="flex items-start justify-between relative z-10">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider bg-[#00B686] text-white px-2.5 py-0.5 rounded-full">
-                  Tailored For Homestays & Resorts
+                <span className="text-[11px] font-extrabold uppercase tracking-wider bg-[#00B686] text-slate-950 px-2.5 py-0.5 rounded-full">
+                  হোটেল আৰু হোমষ্টে’ৰ পকেট-ফ্ৰেইণ্ডলী মাচুল
                 </span>
-                <span className="text-xs text-slate-300">No Costly Hardware</span>
+                <span className="text-xs text-slate-300">১ মাহ বিনামূলীয়া</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                Pocket-Friendly Pricing
+                অৰ্ডাৰফিক্স চাবস্ক্ৰিপচন & ৫% কমিছন মডেল
               </h2>
               <p className="text-xs sm:text-sm text-slate-200 mt-1 max-w-lg">
-                Complex hotel software costs thousands every month. Orderfix gives you 100% double-booking protection for the price of a cup of tea.
+                কোনো মাহেকীয়া হেজাৰ হেজাৰ টকাৰ খৰচ নাই। প্ৰথম মাহ সম্পূৰ্ণ ফ্ৰী আৰু অনলাইন বুকিঙত মাত্ৰ ৫% নূন্যতম মাচুল!
               </p>
             </div>
 
@@ -81,170 +84,75 @@ export const PricingModal: React.FC<PricingModalProps> = ({
               <X className="w-5 h-5" />
             </button>
           </div>
-
-          {/* Billing Cycle Toggle */}
-          <div className="mt-5 flex items-center justify-center relative z-10">
-            <div className="bg-slate-900/50 p-1 rounded-2xl border border-white/15 flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setBillingCycle('monthly')}
-                className={`py-1.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                  billingCycle === 'monthly'
-                    ? 'bg-[#00B686] text-white shadow-md'
-                    : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                Monthly Plan (₹99 / mo)
-              </button>
-              <button
-                type="button"
-                onClick={() => setBillingCycle('annual')}
-                className={`py-1.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 ${
-                  billingCycle === 'annual'
-                    ? 'bg-[#00B686] text-white shadow-md'
-                    : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                <span>Annual Plan (₹999 / yr)</span>
-                <span className="text-[10px] bg-amber-400 text-slate-950 font-black px-1.5 py-0.5 rounded-md">
-                  Save 16%
-                </span>
-              </button>
-            </div>
-          </div>
         </div>
 
-        {/* Modal Body */}
-        <div className="p-6 sm:p-7 space-y-6 max-h-[75vh] overflow-y-auto">
+        {/* Content */}
+        <div className="p-6 sm:p-8 space-y-6">
           
-          {showPaymentSuccess ? (
-            <div className="p-8 text-center space-y-3 bg-emerald-50 rounded-3xl border border-emerald-200">
-              <div className="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/30">
-                <Check className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-black text-emerald-950">
-                Orderfix Pro Active!
-              </h3>
-              <p className="text-xs text-emerald-800 max-w-md mx-auto">
-                Your hotel is fully protected with instant conflict prevention and unlimited WhatsApp confirmations.
+          {/* Key 3 Pillars */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            
+            <div className="p-3.5 rounded-2xl bg-teal-50 border border-teal-200 text-teal-950 space-y-1">
+              <div className="text-[10px] font-black uppercase text-teal-800">১. প্ৰৱেশ মাচুল</div>
+              <div className="text-xl font-black text-teal-950">₹৯৯ (One-Time)</div>
+              <p className="text-[11px] text-teal-800 leading-tight">
+                অ-ঘূৰাইযোগ্য পঞ্জীয়ন মাচুল। এবাৰ দিলে হোটেল নিৰাপদভাৱে তালিকাভুক্ত হয়।
               </p>
-              <button
-                onClick={onClose}
-                className="mt-4 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm cursor-pointer"
-              >
-                Return to Dashboard
-              </button>
             </div>
-          ) : (
-            <>
-              {/* Plan Card */}
-              <div className="rounded-3xl border-2 border-[#00B686] bg-gradient-to-b from-teal-50/50 to-white p-5 sm:p-6 shadow-md relative">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-teal-800">
-                      Orderfix Complete Pro Shield
-                    </span>
-                    <div className="flex items-baseline gap-2 mt-1">
-                      <span className="text-3xl sm:text-4xl font-black text-slate-950">
-                        {billingCycle === 'monthly' ? '₹99' : '₹999'}
-                      </span>
-                      <span className="text-xs sm:text-sm font-semibold text-slate-500">
-                        {billingCycle === 'monthly' ? '/ month' : '/ year (₹83/mo)'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-600 mt-1">
-                      {billingCycle === 'monthly'
-                        ? 'Affordable monthly billing. Cancel anytime.'
-                        : 'Includes 2 Months Free + Priority Setup Support.'}
-                    </p>
-                  </div>
 
-                  <div className="text-right">
-                    <button
-                      type="button"
-                      disabled={isProcessing}
-                      onClick={handleSimulatePayment}
-                      className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-[#0B2545] hover:bg-[#133560] active:scale-95 text-white font-extrabold text-sm transition-all shadow-lg shadow-slate-900/10 flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      {isProcessing ? (
-                        <span>Activating...</span>
-                      ) : (
-                        <>
-                          <Zap className="w-4 h-4 text-[#00B686]" />
-                          <span>
-                            {subscription.isActive && subscription.plan !== 'trial'
-                              ? 'Renew Subscription'
-                              : 'Upgrade Now for ₹' + (billingCycle === 'monthly' ? '99' : '999')}
-                          </span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
+            <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 space-y-1">
+              <div className="text-[10px] font-black uppercase text-emerald-800">২. ফ্ৰী ট্ৰায়েল</div>
+              <div className="text-xl font-black text-emerald-950">১ মাহ ফ্ৰী (30 Days)</div>
+              <p className="text-[11px] text-emerald-800 leading-tight">
+                প্ৰথম ৩০ দিনৰ বাবে কোনো মাহেকীয়া মাচুল নাই। সম্পূৰ্ণ ছফ্টৱেৰ বিনামূলীয়াকৈ ব্যৱহাৰ কৰক।
+              </p>
+            </div>
 
-                {/* Feature Checklist */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-5 mt-5 border-t border-teal-200/60 text-xs">
-                  {[
-                    'Instant Double-Booking Shield',
-                    'Sync Walk-ins & Phone Bookings',
-                    'Integrate MMT, Booking.com, Airbnb',
-                    'Unlimited WhatsApp Confirmations',
-                    'Printable Guest Check-in Slips',
-                    'Mobile & Tablet Browser Friendly',
-                    'Zero Commission on Direct Guests',
-                    'Offline Data Recovery & Backups'
-                  ].map((feat, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-slate-800">
-                      <CheckCircle2 className="w-4 h-4 text-[#00B686] shrink-0" />
-                      <span className="font-semibold">{feat}</span>
-                    </div>
-                  ))}
-                </div>
+            <div className="p-3.5 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-950 space-y-1">
+              <div className="text-[10px] font-black uppercase text-indigo-800">৩. স্বচ্ছ স্প্লিট</div>
+              <div className="text-xl font-black text-indigo-950">৫% : ৯৫%</div>
+              <p className="text-[11px] text-indigo-800 leading-tight">
+                অনলাইন বুকিঙৰ ৫% প্লেটফৰ্মলৈ আৰু ৯৫% পোনে পোনে হোটেল মালিকৰ একাউণ্টলৈ।
+              </p>
+            </div>
+
+          </div>
+
+          {/* Transparent Example Box */}
+          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2 text-xs">
+            <h4 className="font-extrabold text-slate-900 flex items-center gap-1.5">
+              <DollarSign className="w-4 h-4 text-emerald-600" />
+              <span>অনলাইন বুকিঙৰ উদাহৰণ (Transparent Calculation Example):</span>
+            </h4>
+            <div className="grid grid-cols-3 gap-2 bg-white p-3 rounded-xl border border-slate-200 text-center">
+              <div>
+                <span className="text-slate-500 block text-[10px]">গ্ৰাহকে দিয়া মূল্য</span>
+                <span className="text-sm font-black text-slate-900">₹২,০০০</span>
               </div>
-
-              {/* Payment Methods Simulation (Local Market Friendly) */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                <div className="flex items-center justify-between text-xs font-bold text-slate-700 mb-2">
-                  <span>Fast UPI Payment for India & Local Markets</span>
-                  <span className="text-emerald-700 flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5" /> 100% Secure
-                  </span>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-600">
-                  <span className="px-2.5 py-1 bg-white rounded-lg border border-slate-200 font-bold text-purple-700">
-                    PhonePe
-                  </span>
-                  <span className="px-2.5 py-1 bg-white rounded-lg border border-slate-200 font-bold text-blue-700">
-                    Google Pay
-                  </span>
-                  <span className="px-2.5 py-1 bg-white rounded-lg border border-slate-200 font-bold text-sky-700">
-                    Paytm UPI
-                  </span>
-                  <span className="px-2.5 py-1 bg-white rounded-lg border border-slate-200 font-bold text-slate-800">
-                    Any UPI QR
-                  </span>
-                  <span className="px-2.5 py-1 bg-white rounded-lg border border-slate-200 font-bold text-slate-800">
-                    Debit / Credit Card
-                  </span>
-                </div>
+              <div className="border-x border-slate-100">
+                <span className="text-teal-700 block text-[10px]">৫% প্লেটফৰ্ম কমিছন</span>
+                <span className="text-sm font-extrabold text-teal-800">₹১০০</span>
               </div>
-
-              {/* Real Owner Testimonial */}
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-50 to-teal-50/40 border border-slate-200 text-xs text-slate-700 space-y-1.5">
-                <div className="flex items-center gap-1 text-amber-500">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5 fill-current" />
-                  ))}
-                </div>
-                <p className="italic text-slate-800">
-                  &quot;Earlier, our receptionist took a walk-in guest while Booking.com sold the same room 10 minutes later. We had to pay a huge penalty to rehouse the guest. Orderfix at ₹99/month saved us from that headache completely!&quot;
-                </p>
-                <div className="font-bold text-slate-900 text-[11px]">
-                  — Anthony Fernandes, Sea Breeze Homestay, Calangute
-                </div>
+              <div>
+                <span className="text-emerald-700 block text-[10px]">৯৫% হোটেল মালিকলৈ</span>
+                <span className="text-sm font-black text-emerald-700">₹১,৯০০</span>
               </div>
-            </>
-          )}
+            </div>
+            <p className="text-[11px] text-slate-500">
+              * অফলাইন ৱাক-ইন বা ফোন কলৰ বুকিঙত ০% কমিছন প্ৰযোজ্য। হোটেল মালিকে সম্পূৰ্ণ ১০০% ভাৰা নিজৰ হাতত ৰাখিব পাৰে।
+            </p>
+          </div>
+
+          {/* Action button */}
+          <div className="pt-2 flex justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2.5 rounded-xl bg-[#0B2545] text-white font-bold text-xs cursor-pointer shadow-md"
+            >
+              বুজি পালোঁ (Close)
+            </button>
+          </div>
 
         </div>
 

@@ -107,6 +107,11 @@ export const HotelAccounting: React.FC<HotelAccountingProps> = ({
 
   // Financial Calculations
   const totalGrossRevenue = filteredBookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+  const totalPlatformCommission = filteredBookings.reduce(
+    (sum, b) => sum + (b.platformCommission || (b.channel === 'online' ? Math.round(b.totalAmount * 0.05) : 0)),
+    0
+  );
+  const netHotelRevenue = totalGrossRevenue - totalPlatformCommission;
   const totalCollectedAdvance = filteredBookings.reduce((sum, b) => sum + (b.advancePaid || 0), 0);
   const totalPendingDue = filteredBookings.reduce(
     (sum, b) => sum + Math.max(0, (b.totalAmount || 0) - (b.advancePaid || 0)),
@@ -302,8 +307,8 @@ export const HotelAccounting: React.FC<HotelAccountingProps> = ({
         </div>
       </div>
 
-      {/* 5 Executive Financial Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
+      {/* Executive Financial Metric Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-2.5 sm:gap-3.5">
         
         {/* Card 1: Total Gross Revenue */}
         <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200 shadow-xs relative overflow-hidden">
@@ -321,7 +326,39 @@ export const HotelAccounting: React.FC<HotelAccountingProps> = ({
           </p>
         </div>
 
-        {/* Card 2: Total Collected Cash/UPI */}
+        {/* Card 2: 5% Platform Fee */}
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-teal-50/70 border border-teal-200 shadow-xs relative overflow-hidden">
+          <div className="flex items-center justify-between text-teal-800 mb-1">
+            <span className="text-[11px] font-bold uppercase tracking-wider">৫% প্লেটফৰ্ম মাচুল</span>
+            <span className="p-1 rounded-lg bg-teal-100 text-teal-800">
+              <DollarSign className="w-3.5 h-3.5" />
+            </span>
+          </div>
+          <div className="text-xl sm:text-2xl font-black text-teal-950 tracking-tight">
+            ₹{totalPlatformCommission.toLocaleString('en-IN')}
+          </div>
+          <p className="text-[10px] text-teal-700 mt-0.5">
+            অনলাইন বুকিঙৰ ৫% কমিছন
+          </p>
+        </div>
+
+        {/* Card 3: 95% Hotel Net Revenue */}
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200 shadow-xs relative overflow-hidden">
+          <div className="flex items-center justify-between text-indigo-800 mb-1">
+            <span className="text-[11px] font-bold uppercase tracking-wider">৯৫% হোটেল প্ৰাপ্য</span>
+            <span className="p-1 rounded-lg bg-indigo-100 text-indigo-800">
+              <Building className="w-3.5 h-3.5" />
+            </span>
+          </div>
+          <div className="text-xl sm:text-2xl font-black text-indigo-950 tracking-tight">
+            ₹{netHotelRevenue.toLocaleString('en-IN')}
+          </div>
+          <p className="text-[10px] text-indigo-700 mt-0.5">
+            হোটেলৰ নীট ৰাজহ (Net Tariff)
+          </p>
+        </div>
+
+        {/* Card 4: Total Collected Cash/UPI */}
         <div className="p-3.5 sm:p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between text-emerald-800 mb-1">
             <span className="text-[11px] font-bold uppercase tracking-wider">প্ৰাপ্ত নগদ/ইউপিআই</span>
@@ -337,23 +374,7 @@ export const HotelAccounting: React.FC<HotelAccountingProps> = ({
           </p>
         </div>
 
-        {/* Card 3: Pending Balance Due */}
-        <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-50/70 border border-amber-200 shadow-xs relative overflow-hidden">
-          <div className="flex items-center justify-between text-amber-800 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider">বকেয়া / বাকী ধন</span>
-            <span className="p-1 rounded-lg bg-amber-100 text-amber-800">
-              <Clock className="w-3.5 h-3.5" />
-            </span>
-          </div>
-          <div className="text-xl sm:text-2xl font-black text-amber-950 tracking-tight">
-            ₹{totalPendingDue.toLocaleString('en-IN')}
-          </div>
-          <p className="text-[10px] text-amber-700 mt-0.5">
-            চেক-আউটৰ সময়ত ল'বলগীয়া (Due)
-          </p>
-        </div>
-
-        {/* Card 4: Total Hotel Expenses */}
+        {/* Card 5: Total Hotel Expenses */}
         <div className="p-3.5 sm:p-4 rounded-2xl bg-rose-50/70 border border-rose-200 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between text-rose-800 mb-1">
             <span className="text-[11px] font-bold uppercase tracking-wider">মুঠ খৰচ</span>
@@ -369,10 +390,10 @@ export const HotelAccounting: React.FC<HotelAccountingProps> = ({
           </p>
         </div>
 
-        {/* Card 5: Net Profit */}
+        {/* Card 6: Net Profit */}
         <div className="col-span-2 lg:col-span-1 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-teal-50 to-emerald-100/60 border-2 border-teal-400 shadow-xs">
           <div className="flex items-center justify-between text-teal-900 mb-1">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">নিখুঁত লাভ (Net Profit)</span>
+            <span className="text-[11px] font-extrabold uppercase tracking-wider">নিখুঁত লাভ</span>
             <span className="p-1 rounded-lg bg-teal-200 text-teal-900 font-bold text-[10px]">
               লাভাংশ
             </span>
@@ -704,6 +725,8 @@ export const HotelAccounting: React.FC<HotelAccountingProps> = ({
                 <th className="py-2.5 px-3">উৎস (Channel)</th>
                 <th className="py-2.5 px-3">পৰিশোধ মাধ্যম</th>
                 <th className="py-2.5 px-3">মুঠ ভাৰা (Total)</th>
+                <th className="py-2.5 px-3 text-teal-800">৫% প্লেটফৰ্ম মাচুল</th>
+                <th className="py-2.5 px-3 text-indigo-900">৯৫% হোটেল প্ৰাপ্য</th>
                 <th className="py-2.5 px-3">জমা ধন (Paid)</th>
                 <th className="py-2.5 px-3">বাকী (Due)</th>
                 <th className="py-2.5 px-3 text-right">ব্যৱস্থা</th>
@@ -712,13 +735,15 @@ export const HotelAccounting: React.FC<HotelAccountingProps> = ({
             <tbody className="divide-y divide-slate-100">
               {filteredBookings.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-8 text-center text-slate-400">
+                  <td colSpan={11} className="py-8 text-center text-slate-400">
                     কোনো বুকিং বা লেনদেন পোৱা নগ'ল।
                   </td>
                 </tr>
               ) : (
                 filteredBookings.map((b) => {
                   const due = Math.max(0, b.totalAmount - b.advancePaid);
+                  const commission = b.platformCommission || (b.channel === 'online' ? Math.round(b.totalAmount * 0.05) : 0);
+                  const hotelPayout = b.hotelPayoutAmount || (b.totalAmount - commission);
 
                   return (
                     <tr key={b.id} className="hover:bg-slate-50/80 transition-colors">
@@ -751,6 +776,20 @@ export const HotelAccounting: React.FC<HotelAccountingProps> = ({
 
                       <td className="py-2.5 px-3 font-black text-slate-900">
                         ₹{b.totalAmount.toLocaleString('en-IN')}
+                      </td>
+
+                      <td className="py-2.5 px-3 font-bold font-mono text-teal-800">
+                        {commission > 0 ? (
+                          <span className="bg-teal-50 text-teal-800 px-1.5 py-0.5 rounded">
+                            ₹{commission.toLocaleString('en-IN')}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 font-normal">₹0 (0%)</span>
+                        )}
+                      </td>
+
+                      <td className="py-2.5 px-3 font-black font-mono text-indigo-950">
+                        ₹{hotelPayout.toLocaleString('en-IN')}
                       </td>
 
                       <td className="py-2.5 px-3 font-bold text-emerald-700">

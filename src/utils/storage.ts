@@ -1,39 +1,109 @@
-import { Room, Booking, HotelProfile, SubscriptionState, Expense, GuestVerificationData } from '../types';
+import { Room, Booking, HotelProfile, SubscriptionState, Expense, GuestVerificationData, ChannelType } from '../types';
 export type { SubscriptionState, Expense, GuestVerificationData };
 
 export const STORAGE_KEYS = {
   ROOMS: 'orderfix_rooms',
   BOOKINGS: 'orderfix_bookings',
   HOTEL: 'orderfix_hotel',
+  HOTELS: 'orderfix_multi_hotels',
+  ACTIVE_HOTEL_ID: 'orderfix_active_hotel_id',
   SUBSCRIPTION: 'orderfix_subscription',
   EXPENSES: 'orderfix_expenses',
-  VERIFICATIONS: 'orderfix_police_verifications'
+  VERIFICATIONS: 'orderfix_police_verifications',
+  IS_REGISTERED: 'orderfix_is_registered'
 };
 
-export const DEFAULT_HOTEL: HotelProfile = {
-  name: 'Seashell Palms Homestay & Resort',
-  tagline: 'Peaceful Hospitality & Verified Safe Stay',
-  phone: '+91 98234 56789',
-  whatsappNumber: '+91 98234 56789',
-  email: 'contact@seashellpalms.in',
-  address: 'Near Brahmaputra Heritage / Beach Road',
-  city: 'Guwahati',
-  state: 'Assam',
-  pincode: '781006',
-  currency: '₹',
-  upiId: 'seashellpalms@okaxis',
-  checkInStandardTime: '12:00 PM',
-  checkOutStandardTime: '11:00 AM',
-  policeStationName: 'Dispur Police Station, Guwahati',
-  policeStationWhatsApp: '+91 94350 12345',
-  policeStationEmail: 'dispur-ps@assampolice.gov.in',
-  policeStationIncharge: 'Inspector B. Borah, OC Dispur',
-  hotelLicenseNumber: 'ASM/GHY/HTL/2024-912'
-};
+export const SAMPLE_HOTEL_IMAGES = [
+  'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80', // Deluxe Room Bed
+  'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=1200&q=80', // Wooden Suite Bedroom
+  'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80', // Resort Balcony Green View
+  'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=1200&q=80'  // Luxury Attached Bath
+];
+
+export const KAZIRANGA_HOTEL_IMAGES = [
+  'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=1200&q=80'
+];
+
+export const DEFAULT_HOTELS: HotelProfile[] = [
+  {
+    id: 'htl-seashell-01',
+    name: 'Seashell Palms Homestay & Resort',
+    tagline: 'Peaceful Brahmaputra Hospitality & Verified Safe Stay',
+    description: 'Charming boutique homestay and riverside resort located near Brahmaputra Heritage in Guwahati. Features peaceful air-conditioned deluxe rooms, authentic Assamese breakfast, and scenic balcony views.',
+    ownerName: 'Bhaskar Jyoti Baruah',
+    phone: '+91 98234 56789',
+    whatsappNumber: '+91 98234 56789',
+    email: 'contact@seashellpalms.in',
+    address: 'Near Brahmaputra Heritage / Beach Road, Uzan Bazar',
+    city: 'Guwahati',
+    state: 'Assam',
+    pincode: '781001',
+    currency: '₹',
+    upiId: 'seashellpalms@okaxis',
+    checkInStandardTime: '12:00 PM',
+    checkOutStandardTime: '11:00 AM',
+    images: SAMPLE_HOTEL_IMAGES,
+    amenities: ['AC', 'Free High-speed Wi-Fi', 'Free Parking', 'Geyser / Hot Water', 'Smart TV', 'Private Balcony', 'Power Backup', 'In-house Dining'],
+    entryFeePaid: true,
+    entryFeeAmount: 99,
+    entryFeeTxnId: 'ORD-REG-99-88129',
+    entryFeePaidAt: '2026-09-15',
+    subscriptionPlan: 'trial_free_month',
+    subscriptionExpiresAt: '2026-10-15',
+    trialDaysLeft: 26,
+    policeStationName: 'Panbazar Police Station, Guwahati',
+    policeStationWhatsApp: '+91 94350 12345',
+    policeStationEmail: 'panbazar-ps@assampolice.gov.in',
+    policeStationIncharge: 'Inspector B. Borah, OC Panbazar',
+    hotelLicenseNumber: 'ASM/KAM/HTL/2024-912',
+    isRegistered: true,
+    createdAt: '2026-09-15T10:00:00.000Z'
+  },
+  {
+    id: 'htl-kaziranga-02',
+    name: 'Kaziranga Wild Orchid Heritage Lodge',
+    tagline: 'Serene Wildlife Eco-Resort & Homestay',
+    description: 'Eco-friendly forest retreat situated on the edge of Kaziranga National Park Central Range. Enjoy traditional cottages, tea garden walks, and guided safari coordination.',
+    ownerName: 'Pranab Saikia',
+    phone: '+91 94351 98765',
+    whatsappNumber: '+91 94351 98765',
+    email: 'stay@kazirangawildorchid.com',
+    address: 'Kohora Central Range, Near Safari Gate',
+    city: 'Kaziranga',
+    state: 'Assam',
+    pincode: '785609',
+    currency: '₹',
+    upiId: 'wildorchid@upi',
+    checkInStandardTime: '01:00 PM',
+    checkOutStandardTime: '11:00 AM',
+    images: KAZIRANGA_HOTEL_IMAGES,
+    amenities: ['AC', 'Free High-speed Wi-Fi', 'Free Parking', 'Geyser / Hot Water', 'Tea Maker', 'Safari Desk', 'Garden Hammocks', 'Bonfire Area'],
+    entryFeePaid: true,
+    entryFeeAmount: 99,
+    entryFeeTxnId: 'ORD-REG-99-91402',
+    entryFeePaidAt: '2026-09-20',
+    subscriptionPlan: 'trial_free_month',
+    subscriptionExpiresAt: '2026-10-20',
+    trialDaysLeft: 28,
+    policeStationName: 'Bokakhat Police Station, Golaghat',
+    policeStationWhatsApp: '+91 94350 44556',
+    policeStationEmail: 'bokakhat-ps@assampolice.gov.in',
+    policeStationIncharge: 'Inspector R. Gogoi, OC Bokakhat',
+    hotelLicenseNumber: 'ASM/GLG/HTL/2024-411',
+    isRegistered: true,
+    createdAt: '2026-09-20T11:30:00.000Z'
+  }
+];
+
+export const DEFAULT_HOTEL: HotelProfile = DEFAULT_HOTELS[0];
 
 export const DEFAULT_ROOMS: Room[] = [
   {
     id: '101',
+    hotelId: 'htl-seashell-01',
     roomNumber: '101',
     name: 'Garden Breeze',
     type: 'Deluxe AC',
@@ -44,6 +114,7 @@ export const DEFAULT_ROOMS: Room[] = [
   },
   {
     id: '102',
+    hotelId: 'htl-seashell-01',
     roomNumber: '102',
     name: 'Coconut Grove',
     type: 'Standard',
@@ -54,6 +125,7 @@ export const DEFAULT_ROOMS: Room[] = [
   },
   {
     id: '103',
+    hotelId: 'htl-seashell-01',
     roomNumber: '103',
     name: 'Coral Deluxe',
     type: 'Deluxe AC',
@@ -64,6 +136,7 @@ export const DEFAULT_ROOMS: Room[] = [
   },
   {
     id: '104',
+    hotelId: 'htl-seashell-01',
     roomNumber: '104',
     name: 'Ocean Whisper',
     type: 'Premium Sea View',
@@ -74,6 +147,7 @@ export const DEFAULT_ROOMS: Room[] = [
   },
   {
     id: '105',
+    hotelId: 'htl-seashell-01',
     roomNumber: '105',
     name: 'Heritage Suite',
     type: 'Family Suite',
@@ -84,6 +158,7 @@ export const DEFAULT_ROOMS: Room[] = [
   },
   {
     id: '106',
+    hotelId: 'htl-seashell-01',
     roomNumber: '106',
     name: 'Palm Shade',
     type: 'Deluxe AC',
@@ -94,6 +169,7 @@ export const DEFAULT_ROOMS: Room[] = [
   },
   {
     id: '107',
+    hotelId: 'htl-seashell-01',
     roomNumber: '107',
     name: 'Fisherman Cottage',
     type: 'Cottage',
@@ -104,6 +180,7 @@ export const DEFAULT_ROOMS: Room[] = [
   },
   {
     id: '108',
+    hotelId: 'htl-seashell-01',
     roomNumber: '108',
     name: 'Sunset Vista',
     type: 'Deluxe AC',
@@ -114,8 +191,81 @@ export const DEFAULT_ROOMS: Room[] = [
   }
 ];
 
+export function calculatePlatformCommission(amount: number, channel: ChannelType): {
+  commissionRate: number;
+  platformCommission: number;
+  hotelPayoutAmount: number;
+} {
+  if (channel === 'online') {
+    const commissionRate = 0.05; // 5% platform commission
+    const platformCommission = Math.round(amount * commissionRate);
+    const hotelPayoutAmount = amount - platformCommission;
+    return { commissionRate, platformCommission, hotelPayoutAmount };
+  }
+  // Direct offline walk-in bookings: 0% platform fee, 100% hotel owner payout
+  return { commissionRate: 0, platformCommission: 0, hotelPayoutAmount: amount };
+}
+
+export function isHotelRegistered(): boolean {
+  try {
+    const val = localStorage.getItem(STORAGE_KEYS.IS_REGISTERED);
+    if (val === 'true') return true;
+    const hotelRaw = localStorage.getItem(STORAGE_KEYS.HOTEL);
+    if (hotelRaw) {
+      const h = JSON.parse(hotelRaw);
+      if (h.isRegistered) return true;
+    }
+  } catch (e) {
+    console.error('Failed to read registration status', e);
+  }
+  return false;
+}
+
+export function setHotelRegistered(registered: boolean): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.IS_REGISTERED, registered ? 'true' : 'false');
+  } catch (e) {
+    console.error('Failed to set registration status', e);
+  }
+}
+
+export function loadHotels(): HotelProfile[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.HOTELS);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.error('Failed to load multi-vendor hotels', e);
+  }
+  saveHotels(DEFAULT_HOTELS);
+  return DEFAULT_HOTELS;
+}
+
+export function saveHotels(hotels: HotelProfile[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.HOTELS, JSON.stringify(hotels));
+  } catch (e) {
+    console.error('Failed to save multi-vendor hotels', e);
+  }
+}
+
+export function loadActiveHotelId(): string {
+  try {
+    const id = localStorage.getItem(STORAGE_KEYS.ACTIVE_HOTEL_ID);
+    if (id) return id;
+  } catch {}
+  return DEFAULT_HOTELS[0].id;
+}
+
+export function saveActiveHotelId(id: string): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.ACTIVE_HOTEL_ID, id);
+  } catch {}
+}
+
 export function getTodayString(): string {
-  // Use local date or fall back gracefully
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -139,9 +289,10 @@ export function generateInitialBookings(): Booking[] {
   const threeDaysAfter = getOffsetDateString(3);
   const yesterday = getOffsetDateString(-1);
 
-  return [
+  const rawList: Array<Omit<Booking, 'commissionRate' | 'platformCommission' | 'hotelPayoutAmount'>> = [
     {
       id: 'bk-101',
+      hotelId: 'htl-seashell-01',
       roomId: '101',
       roomNumber: '101',
       guestName: 'Rajesh Sharma',
@@ -163,14 +314,15 @@ export function generateInitialBookings(): Booking[] {
     },
     {
       id: 'bk-103',
+      hotelId: 'htl-seashell-01',
       roomId: '103',
       roomNumber: '103',
       guestName: 'Priya Nair',
       guestPhone: '9845012345',
       guestEmail: 'priya.nair@outlook.com',
       channel: 'online',
-      source: 'booking_com',
-      portalBookingId: 'BC-928174',
+      source: 'orderfix_portal',
+      portalBookingId: 'OF-928174',
       checkInDate: yesterday,
       checkOutDate: tomorrow,
       checkInTime: '02:00 PM',
@@ -180,11 +332,12 @@ export function generateInitialBookings(): Booking[] {
       paymentStatus: 'paid',
       paymentMethod: 'online_portal',
       status: 'checked_in',
-      notes: 'Late arrival confirmed by portal.',
+      notes: 'Direct online booking via Orderfix Guest Portal (5% Platform Commission deducted).',
       createdAt: new Date().toISOString()
     },
     {
       id: 'bk-104',
+      hotelId: 'htl-seashell-01',
       roomId: '104',
       roomNumber: '104',
       guestName: 'Amit & Neha Verma',
@@ -206,6 +359,7 @@ export function generateInitialBookings(): Booking[] {
     },
     {
       id: 'bk-105',
+      hotelId: 'htl-seashell-01',
       roomId: '105',
       roomNumber: '105',
       guestName: 'Dr. Ramesh Patel & Family',
@@ -226,6 +380,7 @@ export function generateInitialBookings(): Booking[] {
     },
     {
       id: 'bk-107',
+      hotelId: 'htl-seashell-01',
       roomId: '107',
       roomNumber: '107',
       guestName: 'Sarah & John Miller',
@@ -247,6 +402,14 @@ export function generateInitialBookings(): Booking[] {
       createdAt: new Date().toISOString()
     }
   ];
+
+  return rawList.map((b) => {
+    const split = calculatePlatformCommission(b.totalAmount, b.channel);
+    return {
+      ...b,
+      ...split
+    };
+  });
 }
 
 export function loadRooms(): Room[] {
@@ -271,7 +434,17 @@ export function saveRooms(rooms: Room[]): void {
 export function loadBookings(): Booking[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.BOOKINGS);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Ensure platform commission fields exist
+      return parsed.map((b: any) => {
+        if (b.platformCommission === undefined) {
+          const split = calculatePlatformCommission(b.totalAmount, b.channel);
+          return { ...b, ...split };
+        }
+        return b;
+      });
+    }
   } catch (e) {
     console.error('Failed to load bookings from storage', e);
   }
@@ -291,7 +464,17 @@ export function saveBookings(bookings: Booking[]): void {
 export function loadHotel(): HotelProfile {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.HOTEL);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.images === undefined) {
+        parsed.images = SAMPLE_HOTEL_IMAGES;
+      }
+      if (parsed.entryFeePaid === undefined) {
+        parsed.entryFeePaid = true;
+        parsed.entryFeeAmount = 99;
+      }
+      return parsed;
+    }
   } catch (e) {
     console.error('Failed to load hotel profile', e);
   }
@@ -316,9 +499,9 @@ export function loadSubscription(): SubscriptionState {
   }
   const defaultSub: SubscriptionState = {
     plan: 'trial',
-    trialDaysLeft: 12,
+    trialDaysLeft: 30, // First 1 Month Free Subscription
     isActive: true,
-    expiresAt: getOffsetDateString(12)
+    expiresAt: getOffsetDateString(30)
   };
   saveSubscription(defaultSub);
   return defaultSub;
@@ -335,46 +518,37 @@ export function saveSubscription(sub: SubscriptionState): void {
 export function generateInitialExpenses(): Expense[] {
   const today = getTodayString();
   const yesterday = getOffsetDateString(-1);
+  const fiveDaysAgo = getOffsetDateString(-5);
 
   return [
     {
       id: 'exp-1',
-      title: 'Linen laundry & dry clean (Bed sheets, pillow covers)',
+      title: 'Linen Laundry & Dry Cleaning',
       category: 'supplies',
-      amount: 650,
+      amount: 1200,
       date: today,
-      paymentMethod: 'cash',
-      notes: 'Paid to local laundry service',
+      paymentMethod: 'upi',
+      notes: 'Bed sheets, pillow covers, and fresh bath towels cleaned.',
       createdAt: new Date().toISOString()
     },
     {
       id: 'exp-2',
-      title: 'Breakfast supplies (Bread, eggs, milk, fruits, coffee)',
-      category: 'food_beverage',
-      amount: 1120,
-      date: today,
-      paymentMethod: 'upi',
-      notes: 'Morning buffet items for in-house guests',
+      title: 'Electricity & Inverter Battery Maintenance',
+      category: 'utilities',
+      amount: 3500,
+      date: yesterday,
+      paymentMethod: 'bank',
+      notes: 'APDCL monthly commercial electricity meter bill.',
       createdAt: new Date().toISOString()
     },
     {
       id: 'exp-3',
-      title: 'Room 103 bathroom tap repair & plumber service',
-      category: 'maintenance',
-      amount: 450,
-      date: yesterday,
-      paymentMethod: 'cash',
-      notes: 'Washer replaced and leakage fixed',
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: 'exp-4',
-      title: 'Cleaning supplies & room freshner refill',
-      category: 'supplies',
-      amount: 580,
-      date: yesterday,
+      title: 'Orderfix Hotel Platform Onboarding Fee',
+      category: 'platform_fee',
+      amount: 99,
+      date: fiveDaysAgo,
       paymentMethod: 'upi',
-      notes: 'Floor cleaner, toilet rolls, room sprays',
+      notes: 'Non-refundable ₹99 hotel registration fee (1st month free subscription included).',
       createdAt: new Date().toISOString()
     }
   ];
@@ -403,8 +577,8 @@ export function saveExpenses(expenses: Expense[]): void {
 export function generateInitialVerifications(): GuestVerificationData[] {
   const today = getTodayString();
   const yesterday = getOffsetDateString(-1);
-  const tomorrow = getOffsetDateString(1);
   const dayAfter = getOffsetDateString(2);
+  const tomorrow = getOffsetDateString(1);
 
   return [
     {
@@ -414,9 +588,9 @@ export function generateInitialVerifications(): GuestVerificationData[] {
       guestName: 'Rajesh Sharma',
       age: 38,
       gender: 'Male',
-      dob: '1988-04-12',
+      dob: '1986-04-12',
       idType: 'aadhaar',
-      idNumber: '7823 4519 8832',
+      idNumber: '8921 4455 1092',
       address: 'Flat 402, Nilachal Heights, Zoo Road, Guwahati, Assam - 781024',
       nationality: 'Indian',
       phone: '9820112233',
@@ -476,5 +650,3 @@ export function saveVerifications(list: GuestVerificationData[]): void {
     console.error('Failed to save police verifications', e);
   }
 }
-
-

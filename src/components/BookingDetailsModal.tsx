@@ -246,6 +246,29 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
               </div>
             </div>
 
+            {/* Platform Commission Split */}
+            {booking.channel === 'online' ? (
+              <div className="pt-2 border-t border-slate-200 mt-2 bg-teal-50/70 p-2.5 rounded-xl text-xs space-y-1">
+                <div className="flex justify-between font-bold text-teal-900">
+                  <span>৫% প্লেটফৰ্ম কমিছন (5% Platform Fee):</span>
+                  <span className="font-mono font-extrabold text-teal-800">
+                    ₹{(booking.platformCommission || Math.round(booking.totalAmount * 0.05)).toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <div className="flex justify-between text-slate-700 font-semibold">
+                  <span>হোটেলৰ নীট প্ৰাপ্য (95% Hotel Payout):</span>
+                  <span className="font-mono font-black text-slate-900">
+                    ₹{(booking.hotelPayoutAmount || (booking.totalAmount - Math.round(booking.totalAmount * 0.05))).toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="pt-2 border-t border-slate-200 mt-2 text-[11px] text-slate-500 flex justify-between">
+                <span>অফলাইন ডাইৰেক্ট বুকিং:</span>
+                <span className="font-bold text-emerald-700">০% কমিছন • ১০০% হোটেলৰ একাউণ্টলৈ</span>
+              </div>
+            )}
+
             {isUpdatingPayment && (
               <div className="pt-2 border-t border-slate-200 flex items-center gap-2">
                 <input

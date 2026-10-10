@@ -6,6 +6,7 @@ interface RoomManagerModalProps {
   isOpen: boolean;
   onClose: () => void;
   rooms: Room[];
+  hotelId?: string;
   onUpdateRooms: (rooms: Room[]) => void;
 }
 
@@ -13,6 +14,7 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
   isOpen,
   onClose,
   rooms,
+  hotelId,
   onUpdateRooms
 }) => {
   const [newRoomNumber, setNewRoomNumber] = useState('');
@@ -33,7 +35,8 @@ export const RoomManagerModal: React.FC<RoomManagerModalProps> = ({
     }
 
     const newRoom: Room = {
-      id: newRoomNumber.trim(),
+      id: `room-${hotelId || 'default'}-${newRoomNumber.trim()}`,
+      hotelId,
       roomNumber: newRoomNumber.trim(),
       type: newRoomType,
       floor: Number(newFloor) || 1,

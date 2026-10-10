@@ -14,6 +14,7 @@ import {
   formatDateShort,
   formatSourceName
 } from '../utils/bookingEngine';
+import { calculatePlatformCommission } from '../utils/storage';
 import {
   X,
   ShieldCheck,
@@ -135,6 +136,8 @@ export const AddBookingModal: React.FC<AddBookingModalProps> = ({
       return;
     }
 
+    const split = calculatePlatformCommission(Number(totalAmount) || 0, channel);
+
     const newBooking: Booking = {
       id: `bk-${Date.now().toString().slice(-6)}`,
       roomId: selectedRoomId,
@@ -160,7 +163,10 @@ export const AddBookingModal: React.FC<AddBookingModalProps> = ({
       paymentMethod,
       status: 'confirmed',
       notes: notes.trim() || undefined,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      commissionRate: split.commissionRate,
+      platformCommission: split.platformCommission,
+      hotelPayoutAmount: split.hotelPayoutAmount
     };
 
     onSaveBooking(newBooking, sendWhatsApp);
@@ -570,6 +576,37 @@ export const AddBookingModal: React.FC<AddBookingModalProps> = ({
                 ₹{Math.max(0, totalAmount - advancePaid).toLocaleString('en-IN')}
               </span>
             </div>
+
+            {/* 5% Platform Commission & 95% Hotel Split Information */}
+            {channel === 'online' ? (
+              <div className="bg-teal-50/80 border border-teal-200 rounded-xl p-3 space-y-1.5 text-xs text-teal-950 mt-2">
+                <div className="flex items-center justify-between font-bold">
+                  <span className="flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+                    <span>অনলাইন ৫% প্লেটফৰ্ম কমিছন (5% Platform Fee):</span>
+                  </span>
+                  <span className="font-mono font-extrabold text-teal-800">
+                    ₹{Math.round(totalAmount * 0.05).toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-600 font-medium">হোটেল মালিকৰ প্ৰাপ্য (95% Hotel Net Payout):</span>
+                  <span className="font-mono font-black text-slate-950">
+                    ₹{(totalAmount - Math.round(totalAmount * 0.05)).toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <div className="text-[10px] text-teal-700 pt-1 border-t border-teal-200/60 leading-tight">
+                  ✓ ৫% কমিছন প্লেটফৰ্ম ৱালেটলৈ যাব আৰু ৯৫% হোটেলৰ পঞ্জীকৃত একাউণ্টলৈ যাব।
+                </div>
+              </div>
+            ) : (
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex items-center justify-between text-xs text-slate-600 mt-2">
+                <span>অফলাইন ৱাক-ইন (Offline Walk-in):</span>
+                <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  ০% কমিছন • ১০০% হোটেলৰ লাভ
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Notes */}

@@ -1,7 +1,7 @@
 export type ChannelType = 'offline' | 'online';
 
 export type OfflineSource = 'walk_in' | 'phone_call' | 'whatsapp' | 'direct_ref';
-export type OnlineSource = 'booking_com' | 'makemytrip' | 'agoda' | 'airbnb' | 'goibibo' | 'expedia' | 'other';
+export type OnlineSource = 'orderfix_portal' | 'booking_com' | 'makemytrip' | 'agoda' | 'airbnb' | 'goibibo' | 'expedia' | 'other';
 export type BookingSource = OfflineSource | OnlineSource;
 
 export type BookingStatus = 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled';
@@ -10,6 +10,7 @@ export type PaymentMethod = 'cash' | 'upi' | 'card' | 'online_portal';
 
 export interface Room {
   id: string;
+  hotelId?: string;
   roomNumber: string;
   name?: string;
   type: 'Standard' | 'Deluxe AC' | 'Premium Sea View' | 'Family Suite' | 'Cottage';
@@ -26,6 +27,7 @@ export type PoliceReportStatus = 'pending' | 'submitted' | 'exempt';
 export interface GuestVerificationData {
   id: string;
   bookingId?: string;
+  hotelId?: string;
   roomNumber: string;
   guestName: string;
   age?: number | string;
@@ -42,7 +44,7 @@ export interface GuestVerificationData {
   checkOutDate: string; // YYYY-MM-DD
   purposeOfVisit?: 'Tourism / Leisure' | 'Business / Work' | 'Medical / Treatment' | 'Family / Personal' | 'Transit' | 'Other';
   vehicleNumber?: string;
-  idPhotoUrl?: string; // base64 or preview URL
+  idPhotoUrl?: string;
   policeReportStatus: PoliceReportStatus;
   submittedAt?: string;
   dispatchMethod?: 'whatsapp' | 'email' | 'printed';
@@ -51,12 +53,13 @@ export interface GuestVerificationData {
 
 export interface Booking {
   id: string;
+  hotelId?: string;
   roomId: string;
   roomNumber: string;
   guestName: string;
   guestPhone: string;
   guestEmail?: string;
-  channel: ChannelType;
+  channel: ChannelType; // 'offline' | 'online'
   source: BookingSource;
   checkInDate: string; // YYYY-MM-DD
   checkOutDate: string; // YYYY-MM-DD
@@ -72,11 +75,19 @@ export interface Booking {
   createdAt: string;
   portalBookingId?: string;
   idVerification?: GuestVerificationData;
+  
+  // 5% Platform Commission & Automated Split Fields
+  commissionRate: number; // e.g., 0.05 (5% for online, 0 for offline walk-in)
+  platformCommission: number; // 5% amount for platform owner
+  hotelPayoutAmount: number; // 95% amount for hotel owner
 }
 
 export interface HotelProfile {
+  id: string;
   name: string;
   tagline: string;
+  description?: string;
+  ownerName: string;
   phone: string;
   whatsappNumber: string;
   email: string;
@@ -88,11 +99,52 @@ export interface HotelProfile {
   upiId: string;
   checkInStandardTime: string;
   checkOutStandardTime: string;
+  
+  // Multi-vendor Images (up to 4 high-quality property/room images)
+  images: string[];
+  
+  // Facilities & Amenities
+  amenities: string[];
+  
+  // ₹99 Entry Fee & 1-Month Free Subscription Status
+  entryFeePaid: boolean;
+  entryFeeAmount?: number; // ₹99
+  entryFeeTxnId?: string;
+  entryFeePaidAt?: string;
+  subscriptionPlan: 'trial_free_month' | 'monthly' | 'annual';
+  subscriptionExpiresAt: string; // 30 days after registration
+  trialDaysLeft: number;
+  
+  // Police Station details
   policeStationName?: string;
   policeStationWhatsApp?: string;
   policeStationEmail?: string;
   policeStationIncharge?: string;
   hotelLicenseNumber?: string;
+  
+  isRegistered: boolean;
+  createdAt: string;
+}
+
+export interface FirstTimeRegistrationPayload {
+  hotelName: string;
+  ownerName: string;
+  propertyType: string;
+  phone: string;
+  whatsappNumber: string;
+  email?: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode?: string;
+  description?: string;
+  images: string[];
+  amenities: string[];
+  policeStationName?: string;
+  policeStationWhatsApp?: string;
+  roomCount: number;
+  basePrice: number;
+  entryFeeTxnId?: string;
 }
 
 export interface ConflictResult {
@@ -114,10 +166,12 @@ export type ExpenseCategory =
   | 'utilities'
   | 'maintenance'
   | 'staff'
+  | 'platform_fee'
   | 'other';
 
 export interface Expense {
   id: string;
+  hotelId?: string;
   title: string;
   category: ExpenseCategory;
   amount: number;
@@ -127,3 +181,9 @@ export interface Expense {
   createdAt: string;
 }
 
+export interface PlatformCommissionSummary {
+  totalPlatformRevenue: number; // 5% collected from all online bookings
+  totalHotelPayouts: number; // 95% sent to hotels
+  totalOnlineBookingsCount: number;
+  entryFeesCollected: number; // Number of hotels * ₹99
+}

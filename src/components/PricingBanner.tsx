@@ -30,24 +30,21 @@ export const PricingBanner: React.FC<PricingBannerProps> = ({
 
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs uppercase font-extrabold tracking-wider bg-teal-500/20 text-[#00E5A3] px-2 py-0.5 rounded-full border border-teal-500/30">
-                Small Hotel & Homestay Special
+              <span className="text-xs uppercase font-extrabold tracking-wider bg-emerald-500/20 text-[#00E5A3] px-2 py-0.5 rounded-full border border-teal-500/30">
+                প্ৰথম ১ মাহ বিনামূলীয়া (30 Days Free Trial)
               </span>
               <span className="text-xs text-slate-300">
-                Zero Commission • 100% Conflict Shield
+                ₹৯৯ এণ্ট্ৰী মাচুল • ৫% স্বচ্ছ প্লেটফৰ্ম কমিছন
               </span>
             </div>
             <h3 className="text-base sm:text-lg font-bold text-white mt-1 leading-snug">
-              Stop costly double-bookings for just{' '}
+              অনলাইন আৰু অফলাইন ডাবল-বুকিং ৰোধ কৰক —{' '}
               <span className="text-[#00E5A3] underline decoration-teal-500/40 underline-offset-4 font-extrabold">
-                ₹99 / month
-              </span>{' '}
-              <span className="text-xs text-slate-300 font-normal">
-                (or ₹999 / year with 2 months free)
+                প্ৰথম মাহ সম্পূৰ্ণ ফ্ৰী
               </span>
             </h3>
             <p className="text-xs text-slate-300 mt-0.5">
-              Sync walk-ins, phone calls, MakeMyTrip, Booking.com, Airbnb & direct WhatsApp inquiries in one pocket-friendly screen.
+              অনলাইন অৰ্ডাৰত মাত্ৰ ৫% নূন্যতম মাচুল আৰু বাকী ৯৫% পোনপটীয়াকৈ হোটেলৰ একাউণ্টলৈ। অফলাইন ৱাক-ইনত ০% মাচুল।
             </p>
           </div>
         </div>
