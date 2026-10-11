@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Room, Booking, HotelProfile, SubscriptionState, Expense, GuestVerificationData } from './types';
+import { Room, Booking, HotelProfile, SubscriptionState, Expense, GuestVerificationData, User } from './types';
 import {
   loadRooms,
   saveRooms,
@@ -24,6 +24,8 @@ import {
   saveExpenses,
   loadVerifications,
   saveVerifications,
+  loadAuthUser,
+  saveAuthUser,
   getTodayString,
   generateInitialBookings,
   DEFAULT_ROOMS,
@@ -47,6 +49,7 @@ import { MobileBottomNav } from './components/MobileBottomNav';
 import { HotelAccounting } from './components/HotelAccounting';
 import { PoliceVerificationView } from './components/PoliceVerificationView';
 import { RegistrationScreen } from './components/RegistrationScreen';
+import { AuthModal } from './components/AuthModal';
 import {
   LayoutGrid,
   List,
@@ -69,6 +72,32 @@ export default function App() {
   // Registration Status & New Property Onboarding
   const [isRegistered, setIsRegistered] = useState<boolean>(() => isHotelRegistered());
   const [isRegisteringNewHotel, setIsRegisteringNewHotel] = useState(false);
+
+  // Authentication State (Hotel Owners & Customers)
+  const [authUser, setAuthUser] = useState<User | null>(() => loadAuthUser());
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authInitialRole, setAuthInitialRole] = useState<'owner' | 'customer'>('owner');
+
+  const handleLoginSuccess = (user: User) => {
+    setAuthUser(user);
+    saveAuthUser(user);
+    if (user.role === 'owner') {
+      setHotelRegistered(true);
+      setIsRegistered(true);
+    }
+    showToast(`🎉 স্বাগতম ${user.name}! সফলভাৱে লগইন হ'ল`, 'success');
+  };
+
+  const handleLogout = () => {
+    setAuthUser(null);
+    saveAuthUser(null);
+    showToast('লগআউট সফল হ’ল (Logged out successfully)', 'info');
+  };
+
+  const handleOpenAuth = (role: 'owner' | 'customer' = 'owner') => {
+    setAuthInitialRole(role);
+    setIsAuthModalOpen(true);
+  };
 
   // Active Hotel Entity
   const hotel = hotels.find((h) => h.id === activeHotelId) || hotels[0] || DEFAULT_HOTEL;
@@ -313,25 +342,50 @@ export default function App() {
   // 1. FIRST-TIME REGISTRATION OR ONBOARDING NEW PROPERTY
   if (!isRegistered || isRegisteringNewHotel) {
     return (
-      <RegistrationScreen
-        onCompleteRegistration={handleCompleteRegistration}
-        onCancel={isRegisteringNewHotel ? () => setIsRegisteringNewHotel(false) : undefined}
-      />
+      <>
+        <RegistrationScreen
+          onCompleteRegistration={handleCompleteRegistration}
+          onCancel={isRegisteringNewHotel ? () => setIsRegisteringNewHotel(false) : undefined}
+          onOpenLogin={() => handleOpenAuth('owner')}
+        />
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          onLoginSuccess={handleLoginSuccess}
+          onOpenHotelRegistration={() => {
+            setIsAuthModalOpen(false);
+            setIsRegisteringNewHotel(true);
+          }}
+          initialRole={authInitialRole}
+        />
+      </>
     );
   }
 
   // 2. CUSTOMER / GUEST MARKETPLACE VIEW
   if (isCustomerViewActive) {
     return (
-      <CustomerGuestView
-        hotels={hotels}
-        activeHotel={hotel}
-        onSelectHotel={handleSelectHotel}
-        rooms={rooms}
-        bookings={bookings}
-        onSaveBooking={handleSaveBooking}
-        onBackToOwner={() => setIsCustomerViewActive(false)}
-      />
+      <>
+        <CustomerGuestView
+          hotels={hotels}
+          activeHotel={hotel}
+          onSelectHotel={handleSelectHotel}
+          rooms={rooms}
+          bookings={bookings}
+          onSaveBooking={handleSaveBooking}
+          onBackToOwner={() => setIsCustomerViewActive(false)}
+        />
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          onLoginSuccess={handleLoginSuccess}
+          onOpenHotelRegistration={() => {
+            setIsAuthModalOpen(false);
+            setIsRegisteringNewHotel(true);
+          }}
+          initialRole={authInitialRole}
+        />
+      </>
     );
   }
 
@@ -387,6 +441,9 @@ export default function App() {
         onOpenCustomerView={() => setIsCustomerViewActive(true)}
         onOpenAccounting={() => setActiveViewTab('accounting')}
         onOpenPoliceVerification={() => setActiveViewTab('police')}
+        authUser={authUser}
+        onOpenAuth={() => handleOpenAuth('owner')}
+        onLogout={handleLogout}
       />
 
       {/* Mobile Sticky Quick Action Bar */}
@@ -690,6 +747,18 @@ export default function App() {
           saveSubscription(newSub);
           showToast('Subscription plan updated!', 'success');
         }}
+      />
+
+      {/* Authentication Login & Signup Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+        onOpenHotelRegistration={() => {
+          setIsAuthModalOpen(false);
+          setIsRegisteringNewHotel(true);
+        }}
+        initialRole={authInitialRole}
       />
 
     </div>

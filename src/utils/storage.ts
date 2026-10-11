@@ -10,8 +10,31 @@ export const STORAGE_KEYS = {
   SUBSCRIPTION: 'orderfix_subscription',
   EXPENSES: 'orderfix_expenses',
   VERIFICATIONS: 'orderfix_police_verifications',
-  IS_REGISTERED: 'orderfix_is_registered'
+  IS_REGISTERED: 'orderfix_is_registered',
+  AUTH_USER: 'orderfix_auth_user'
 };
+
+export function loadAuthUser(): import('../types').User | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.AUTH_USER);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    console.error('Failed to load auth user', e);
+  }
+  return null;
+}
+
+export function saveAuthUser(user: import('../types').User | null): void {
+  try {
+    if (user) {
+      localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
+    }
+  } catch (e) {
+    console.error('Failed to save auth user', e);
+  }
+}
 
 export const SAMPLE_HOTEL_IMAGES = [
   'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80', // Deluxe Room Bed

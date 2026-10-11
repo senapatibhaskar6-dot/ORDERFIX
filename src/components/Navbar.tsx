@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { OrderfixLogo } from './Logo';
-import { HotelProfile, SubscriptionState } from '../types';
+import { HotelProfile, SubscriptionState, User } from '../types';
 import {
   Calendar,
   PlusCircle,
@@ -15,7 +15,10 @@ import {
   ShieldCheck,
   ChevronDown,
   Plus,
-  Check
+  Check,
+  LogIn,
+  LogOut,
+  User as UserIcon
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -36,6 +39,9 @@ interface NavbarProps {
   onOpenCustomerView: () => void;
   onOpenAccounting?: () => void;
   onOpenPoliceVerification?: () => void;
+  authUser?: User | null;
+  onOpenAuth?: () => void;
+  onLogout?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -55,7 +61,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   onResetDemoData,
   onOpenCustomerView,
   onOpenAccounting,
-  onOpenPoliceVerification
+  onOpenPoliceVerification,
+  authUser,
+  onOpenAuth,
+  onLogout
 }) => {
   const today = new Date().toISOString().split('T')[0];
   const isToday = selectedDate === today;
@@ -282,6 +291,36 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Sparkles className="w-3 h-3 text-teal-600" />
               <span>১ মাহ ফ্ৰী • ৫%</span>
             </button>
+
+            {/* User Profile & Logout */}
+            {authUser ? (
+              <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 pl-2 pr-1 py-1 rounded-xl text-xs shrink-0">
+                <UserIcon className="w-3.5 h-3.5 text-teal-700 shrink-0" />
+                <span className="font-bold text-slate-800 truncate max-w-[70px] sm:max-w-[110px]">
+                  {authUser.name || 'User'}
+                </span>
+                {onLogout && (
+                  <button
+                    type="button"
+                    onClick={onLogout}
+                    className="ml-1 p-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors cursor-pointer"
+                    title="লগআউট কৰক (Logout)"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            ) : onOpenAuth ? (
+              <button
+                type="button"
+                onClick={onOpenAuth}
+                className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-bold bg-teal-50 hover:bg-teal-100 text-teal-900 border border-teal-300 transition-all cursor-pointer shadow-xs shrink-0"
+                title="প্ৰৱেশ / লগইন কৰক (Sign In)"
+              >
+                <LogIn className="w-3.5 h-3.5 text-teal-700 shrink-0" />
+                <span>লগইন</span>
+              </button>
+            ) : null}
 
           </div>
 

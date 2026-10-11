@@ -187,3 +187,43 @@ export interface PlatformCommissionSummary {
   totalOnlineBookingsCount: number;
   entryFeesCollected: number; // Number of hotels * ₹99
 }
+
+export type UserRole = 'owner' | 'customer' | 'admin';
+
+export interface User {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  role: UserRole;
+  hotelId?: string;
+}
+
+export interface AuthSession {
+  user: User | null;
+  isAuthenticated: boolean;
+}
+
+export interface PropertyMonthlyReport {
+  hotelId: string;
+  hotelName: string;
+  propertyType: string;
+  city: string;
+  phone: string;
+  onlineBookingsCount: number;
+  monthlyRevenue: number;
+  platformCommission: number;
+  netHotelPayout: number;
+}
+
+export interface AdminPlatformMetrics {
+  totalPropertiesCount: number;
+  hotelsCount: number;
+  guestHousesCount: number;
+  hallsCount: number;
+  totalOnlineBookingsCount: number;
+  totalOnlineRevenue: number;
+  totalPlatformCommissionCollected: number;
+  totalEntryFeesCollected: number;
+  totalPlatformEarnings: number;
+}

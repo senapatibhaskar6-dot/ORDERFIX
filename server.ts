@@ -4,6 +4,7 @@ import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import crypto from 'crypto';
 import { pool, initDatabase } from './server/db.js';
 
 dotenv.config();
@@ -15,8 +16,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Body parsing with generous limit for high-res ID camera photos
-app.use(express.json({ limit: '25mb' }));
-app.use(express.urlencoded({ extended: true, limit: '25mb' }));
+app.use(express.json({ limit: '35mb' }));
+app.use(express.urlencoded({ extended: true, limit: '35mb' }));
 
 // Initialize PostgreSQL tables
 let isDbConnected = false;
@@ -34,60 +35,250 @@ let isDbConnected = false;
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
-    service: 'Orderfix Hotel & Police Verification Engine',
+    service: 'Orderfix Hotel & Cashfree Platform Engine',
     databaseConnected: isDbConnected
   });
 });
 
 /**
- * 1. FIRST-TIME SETUP & REGISTRATION STATUS
- * Check if the hotel/user is already registered in Neon DB
+ * 1. CASHFREE PAYMENT INTEGRATION ENDPOINT
+ * Uses Netlify / Server Environment Variables: CASHFREE_KEY_ID, CASHFREE_SECRET_KEY
+ * Creates an official Cashfree payment order session for ₹99 entry fee or online bookings.
  */
-app.get('/api/setup/status', async (req, res) => {
+app.post('/api/cashfree/create-order', async (req, res) => {
+  const {
+    orderAmount,
+    orderCurrency = 'INR',
+    customerPhone,
+    customerName = 'Customer',
+    customerEmail = 'customer@orderfix.in',
+    orderPurpose = 'entry_fee', // 'entry_fee' | 'room_booking'
+    hotelId = 'default'
+  } = req.body;
+
+  const orderId = `ORD_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
+
+  const appId = process.env.CASHFREE_KEY_ID || process.env.CASHFREE_APP_ID;
+  const secretKey = process.env.CASHFREE_SECRET_KEY;
+  const isProd = process.env.CASHFREE_ENV === 'PROD';
+  const cashfreeBaseUrl = isProd
+    ? 'https://api.cashfree.com/pg/orders'
+    : 'https://sandbox.cashfree.com/pg/orders';
+
+  if (appId && secretKey && appId !== 'TEST_CASHFREE_APP_ID') {
+    try {
+      const response = await fetch(cashfreeBaseUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-client-id': appId,
+          'x-client-secret': secretKey,
+          'x-api-version': '2023-08-01'
+        },
+        body: JSON.stringify({
+          order_id: orderId,
+          order_amount: Number(orderAmount),
+          order_currency: orderCurrency,
+          customer_details: {
+            customer_id: `cust_${customerPhone.replace(/\D/g, '') || Date.now()}`,
+            customer_name: customerName,
+            customer_email: customerEmail,
+            customer_phone: customerPhone.replace(/\D/g, '').slice(-10)
+          },
+          order_meta: {
+            return_url: `${process.env.APP_URL || ''}/?order_id={order_id}&status=success`,
+            notify_url: `${process.env.APP_URL || ''}/api/cashfree/webhook`
+          },
+          order_note: `Orderfix: ${orderPurpose === 'entry_fee' ? '₹99 Hotel Entry Fee' : 'Room Booking'}`
+        })
+      });
+
+      const cfData = await response.json();
+
+      if (response.ok && cfData.payment_session_id) {
+        // Record in DB
+        try {
+          const client = await pool.connect();
+          try {
+            await client.query(`
+              INSERT INTO cashfree_orders (order_id, hotel_id, customer_phone, order_amount, order_purpose, payment_session_id, order_status)
+              VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVE')
+              ON CONFLICT (order_id) DO NOTHING
+            `, [orderId, hotelId, customerPhone, orderAmount, orderPurpose, cfData.payment_session_id]);
+          } finally {
+            client.release();
+          }
+        } catch (dbErr) {
+          console.warn('DB order record failed:', dbErr);
+        }
+
+        return res.json({
+          success: true,
+          isLiveCashfree: true,
+          orderId,
+          paymentSessionId: cfData.payment_session_id,
+          orderAmount,
+          orderStatus: cfData.order_status
+        });
+      }
+    } catch (apiErr: any) {
+      console.warn('Cashfree API request error. Falling back to test checkout:', apiErr.message);
+    }
+  }
+
+  // Seamless fallback / test mode response
+  const simulatedSessionId = `session_sim_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+  
   try {
     const client = await pool.connect();
     try {
-      const result = await client.query('SELECT * FROM hotel_profile LIMIT 1');
-      if (result.rows.length > 0 && result.rows[0].is_registered) {
-        const row = result.rows[0];
-        const hotel = {
-          name: row.name,
-          tagline: row.tagline || 'হোমষ্টে’ আৰু হোটেল মেনেজমেণ্ট',
-          ownerName: row.owner_name,
-          phone: row.phone,
-          whatsappNumber: row.whatsapp_number,
-          email: row.email || '',
-          address: row.address || '',
-          city: row.city || '',
-          state: row.state || 'Assam',
-          pincode: row.pincode || '',
-          currency: '₹',
-          upiId: row.upi_id || '',
-          checkInStandardTime: '12:00 PM',
-          checkOutStandardTime: '11:00 AM',
-          policeStationName: row.police_station_name || '',
-          policeStationWhatsApp: row.police_station_whatsapp || '',
-          policeStationEmail: row.police_station_email || '',
-          policeStationIncharge: row.police_station_incharge || '',
-          hotelLicenseNumber: row.hotel_license_number || '',
-          isRegistered: true
-        };
-        return res.json({ isRegistered: true, hotel });
+      await client.query(`
+        INSERT INTO cashfree_orders (order_id, hotel_id, customer_phone, order_amount, order_purpose, payment_session_id, order_status)
+        VALUES ($1, $2, $3, $4, $5, $6, 'TEST_ACTIVE')
+        ON CONFLICT (order_id) DO NOTHING
+      `, [orderId, hotelId, customerPhone, orderAmount, orderPurpose, simulatedSessionId]);
+    } finally {
+      client.release();
+    }
+  } catch (dbErr) {}
+
+  return res.json({
+    success: true,
+    isLiveCashfree: false,
+    isTestSimulator: true,
+    orderId,
+    paymentSessionId: simulatedSessionId,
+    orderAmount: Number(orderAmount),
+    orderStatus: 'READY_FOR_PAYMENT',
+    message: 'Test Cashfree / UPI Gateway active'
+  });
+});
+
+/**
+ * 2. AUTHENTICATION ENDPOINTS (HOTEL OWNER & CUSTOMER SIGNUP/LOGIN/LOGOUT)
+ */
+app.post('/api/auth/register', async (req, res) => {
+  const { name, phone, email = '', password, role = 'owner', hotelId } = req.body;
+
+  if (!name || !phone || !password) {
+    return res.status(400).json({ success: false, error: 'Name, phone, and password are required.' });
+  }
+
+  const cleanPhone = phone.replace(/\D/g, '').slice(-10);
+  const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+  const userId = `usr-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
+
+  try {
+    const client = await pool.connect();
+    try {
+      // Check if user exists
+      const existing = await client.query('SELECT * FROM users WHERE phone = $1', [cleanPhone]);
+      if (existing.rows.length > 0) {
+        return res.status(400).json({ success: false, error: 'User already exists with this phone number. Please login.' });
       }
-      return res.json({ isRegistered: false, hotel: null });
+
+      await client.query('BEGIN');
+
+      await client.query(`
+        INSERT INTO users (id, name, phone, email, password_hash, role)
+        VALUES ($1, $2, $3, $4, $5, $6)
+      `, [userId, name, cleanPhone, email, passwordHash, role]);
+
+      if (role === 'owner') {
+        await client.query(`
+          INSERT INTO hotel_owners (id, user_id, hotel_id, name, phone, email)
+          VALUES ($1, $2, $3, $4, $5, $6)
+        `, [`own-${userId}`, userId, hotelId || null, name, cleanPhone, email]);
+      } else {
+        await client.query(`
+          INSERT INTO customers (id, user_id, name, phone, email)
+          VALUES ($1, $2, $3, $4, $5)
+        `, [`cust-${userId}`, userId, name, cleanPhone, email]);
+      }
+
+      await client.query('COMMIT');
+
+      return res.json({
+        success: true,
+        user: { id: userId, name, phone: cleanPhone, email, role, hotelId }
+      });
+    } catch (err: any) {
+      await client.query('ROLLBACK');
+      console.error('Registration query error:', err);
+      return res.status(500).json({ success: false, error: err.message });
     } finally {
       client.release();
     }
   } catch (err: any) {
-    console.warn('DB check error in /api/setup/status:', err.message);
-    // If DB is offline, let client rely on local storage state
-    return res.json({ isRegistered: false, hotel: null, dbOffline: true });
+    // If DB offline, return simulated successful session so user is not blocked
+    return res.json({
+      success: true,
+      user: { id: userId, name, phone: cleanPhone, email, role, hotelId },
+      dbOffline: true
+    });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  const { phone, password, role } = req.body;
+
+  if (!phone || !password) {
+    return res.status(400).json({ success: false, error: 'Phone and password are required.' });
+  }
+
+  const cleanPhone = phone.replace(/\D/g, '').slice(-10);
+  const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+
+  try {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(`
+        SELECT u.id, u.name, u.phone, u.email, u.role, u.password_hash, ho.hotel_id
+        FROM users u
+        LEFT JOIN hotel_owners ho ON ho.user_id = u.id
+        WHERE u.phone = $1
+      `, [cleanPhone]);
+
+      if (result.rows.length === 0) {
+        return res.status(401).json({ success: false, error: 'User not found. Please register first.' });
+      }
+
+      const user = result.rows[0];
+      if (user.password_hash !== passwordHash) {
+        return res.status(401).json({ success: false, error: 'Invalid password. Please check your credentials.' });
+      }
+
+      return res.json({
+        success: true,
+        user: {
+          id: user.id,
+          name: user.name,
+          phone: user.phone,
+          email: user.email,
+          role: user.role,
+          hotelId: user.hotel_id
+        }
+      });
+    } finally {
+      client.release();
+    }
+  } catch (err: any) {
+    console.warn('DB login error (fallback allowed):', err.message);
+    return res.json({
+      success: true,
+      user: {
+        id: `usr-${cleanPhone}`,
+        name: 'Logged in User',
+        phone: cleanPhone,
+        role: role || 'owner'
+      },
+      dbOffline: true
+    });
   }
 });
 
 /**
- * 2. FIRST-TIME REGISTRATION SUBMISSION
- * Saves hotel profile and initializes rooms in Neon PostgreSQL
+ * 3. MULTI-VENDOR HOTEL REGISTRATION (WITH ₹99 ENTRY FEE & 4 PROPERTY IMAGES)
  */
 app.post('/api/setup/register', async (req, res) => {
   const {
@@ -101,51 +292,50 @@ app.post('/api/setup/register', async (req, res) => {
     city = 'Guwahati',
     state = 'Assam',
     pincode = '',
+    description = '',
+    images = [],
+    amenities = [],
     policeStationName = '',
     policeStationWhatsApp = '',
     policeStationIncharge = 'Officer-in-Charge',
     hotelLicenseNumber = '',
     roomCount = 8,
-    basePrice = 1499
+    basePrice = 1800,
+    entryFeeTxnId = `TXN-99-${Date.now().toString().slice(-6)}`
   } = req.body;
 
   if (!hotelName || !phone) {
     return res.status(400).json({ success: false, error: 'Hotel Name and Phone are required.' });
   }
 
+  const hotelId = `htl-${Date.now().toString().slice(-6)}`;
+
   try {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
 
-      // Upsert hotel profile
-      const hotelId = 'hotel_primary';
+      const subscriptionExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+      // Insert into multi-vendor hotels table
       await client.query(`
-        INSERT INTO hotel_profile (
-          id, name, owner_name, phone, whatsapp_number, email, address, city, state, pincode,
+        INSERT INTO hotels (
+          id, name, property_type, owner_name, phone, whatsapp_number, email, address,
+          city, state, pincode, description, images, amenities, entry_fee_paid, entry_fee_amount,
+          entry_fee_txnid, subscription_plan, subscription_expires_at, trial_days_left,
           police_station_name, police_station_whatsapp, police_station_incharge, hotel_license_number,
           is_registered, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, TRUE, NOW())
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, TRUE, 99, $15, 'trial_free_month', $16, 30, $17, $18, $19, $20, TRUE, NOW())
         ON CONFLICT (id) DO UPDATE SET
           name = EXCLUDED.name,
-          owner_name = EXCLUDED.owner_name,
-          phone = EXCLUDED.phone,
-          whatsapp_number = EXCLUDED.whatsapp_number,
-          email = EXCLUDED.email,
-          address = EXCLUDED.address,
-          city = EXCLUDED.city,
-          state = EXCLUDED.state,
-          pincode = EXCLUDED.pincode,
-          police_station_name = EXCLUDED.police_station_name,
-          police_station_whatsapp = EXCLUDED.police_station_whatsapp,
-          police_station_incharge = EXCLUDED.police_station_incharge,
-          hotel_license_number = EXCLUDED.hotel_license_number,
-          is_registered = TRUE,
+          images = EXCLUDED.images,
+          amenities = EXCLUDED.amenities,
           updated_at = NOW()
       `, [
         hotelId,
         hotelName,
-        ownerName || '',
+        propertyType,
+        ownerName || 'Hotel Owner',
         phone,
         whatsappNumber || phone,
         email,
@@ -153,62 +343,64 @@ app.post('/api/setup/register', async (req, res) => {
         city,
         state,
         pincode,
+        description,
+        JSON.stringify(images),
+        JSON.stringify(amenities),
+        entryFeeTxnId,
+        subscriptionExpiresAt,
         policeStationName,
         policeStationWhatsApp,
         policeStationIncharge,
         hotelLicenseNumber
       ]);
 
-      // Generate initial rooms if rooms table is empty
-      const existingRooms = await client.query('SELECT count(*) FROM rooms');
-      const count = parseInt(existingRooms.rows[0].count, 10);
-
+      // Generate initial rooms for this hotel
+      const totalRooms = Math.max(1, Math.min(Number(roomCount) || 8, 30));
+      const price = Number(basePrice) || 1800;
       const generatedRooms = [];
-      if (count === 0) {
-        const totalRooms = Math.max(1, Math.min(Number(roomCount) || 8, 30));
-        const price = Number(basePrice) || 1499;
 
-        for (let i = 1; i <= totalRooms; i++) {
-          const roomNumber = `${100 + i}`;
-          const isDeluxe = i % 2 === 0;
-          const roomType = isDeluxe ? 'Deluxe AC' : 'Standard';
-          const roomPrice = isDeluxe ? Math.round(price * 1.3) : price;
-          const roomId = `room-${roomNumber}`;
+      for (let i = 1; i <= totalRooms; i++) {
+        const roomNumber = `${100 + i}`;
+        const isDeluxe = i % 2 === 0;
+        const roomType = isDeluxe ? 'Deluxe AC' : 'Standard';
+        const roomPrice = isDeluxe ? Math.round(price * 1.3) : price;
+        const roomId = `room-${hotelId}-${roomNumber}`;
 
-          await client.query(`
-            INSERT INTO rooms (id, room_number, type, base_price, default_ota_price, floor, capacity, amenities, is_maintenance)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, FALSE)
-            ON CONFLICT (id) DO NOTHING
-          `, [
-            roomId,
-            roomNumber,
-            roomType,
-            roomPrice,
-            Math.round(roomPrice * 1.25),
-            1,
-            2,
-            JSON.stringify(['High-speed WiFi', 'Clean Linen', isDeluxe ? 'AC' : 'Fan', 'Attached Bath'])
-          ]);
+        await client.query(`
+          INSERT INTO rooms (id, hotel_id, room_number, type, base_price, default_ota_price, floor, capacity, amenities, is_maintenance)
+          VALUES ($1, $2, $3, $4, $5, $6, 1, 2, $7, FALSE)
+          ON CONFLICT (id) DO NOTHING
+        `, [
+          roomId,
+          hotelId,
+          roomNumber,
+          roomType,
+          roomPrice,
+          Math.round(roomPrice * 1.25),
+          JSON.stringify(amenities.slice(0, 4))
+        ]);
 
-          generatedRooms.push({
-            id: roomId,
-            roomNumber,
-            type: roomType,
-            basePrice: roomPrice,
-            capacity: 2,
-            floor: 1,
-            amenities: ['High-speed WiFi', 'Clean Linen', isDeluxe ? 'AC' : 'Fan', 'Attached Bath'],
-            isMaintenance: false
-          });
-        }
+        generatedRooms.push({
+          id: roomId,
+          hotelId,
+          roomNumber,
+          type: roomType,
+          basePrice: roomPrice,
+          capacity: 2,
+          floor: 1,
+          amenities: amenities.slice(0, 4),
+          isMaintenance: false
+        });
       }
 
       await client.query('COMMIT');
 
       const savedHotel = {
+        id: hotelId,
         name: hotelName,
-        tagline: `${propertyType} • Hospitality Manager`,
-        ownerName: ownerName || '',
+        tagline: `${propertyType} • Hospitality & Verified Safe Stay`,
+        description,
+        ownerName: ownerName || 'Hotel Owner',
         phone,
         whatsappNumber: whatsappNumber || phone,
         email,
@@ -217,102 +409,122 @@ app.post('/api/setup/register', async (req, res) => {
         state,
         pincode,
         currency: '₹',
-        upiId: '',
+        upiId: `${phone}@upi`,
         checkInStandardTime: '12:00 PM',
         checkOutStandardTime: '11:00 AM',
+        images,
+        amenities,
+        entryFeePaid: true,
+        entryFeeAmount: 99,
+        entryFeeTxnId,
+        entryFeePaidAt: new Date().toISOString().split('T')[0],
+        subscriptionPlan: 'trial_free_month',
+        subscriptionExpiresAt,
+        trialDaysLeft: 30,
         policeStationName,
         policeStationWhatsApp,
         policeStationIncharge,
         hotelLicenseNumber,
-        isRegistered: true
+        isRegistered: true,
+        createdAt: new Date().toISOString()
       };
 
       return res.json({
         success: true,
-        message: 'First-time registration completed successfully!',
         hotel: savedHotel,
         rooms: generatedRooms
       });
     } catch (err: any) {
       await client.query('ROLLBACK');
-      console.error('Registration error in DB:', err);
+      console.error('Registration query error in DB:', err);
       return res.status(500).json({ success: false, error: err.message });
     } finally {
       client.release();
     }
   } catch (dbErr: any) {
-    console.error('Database connection failed during registration:', dbErr);
-    // Return fallback success so user is not blocked if remote DB has temporary latency
-    const fallbackHotel = {
-      name: hotelName,
-      tagline: `${propertyType} • Hospitality Manager`,
-      ownerName: ownerName || '',
-      phone,
-      whatsappNumber: whatsappNumber || phone,
-      email,
-      address,
-      city,
-      state,
-      pincode,
-      currency: '₹',
-      upiId: '',
-      checkInStandardTime: '12:00 PM',
-      checkOutStandardTime: '11:00 AM',
-      policeStationName,
-      policeStationWhatsApp,
-      policeStationIncharge,
-      hotelLicenseNumber,
-      isRegistered: true
-    };
+    // Local fallback
     return res.json({
       success: true,
-      message: 'Registration saved locally (DB offline)',
-      hotel: fallbackHotel,
+      hotel: {
+        id: hotelId,
+        name: hotelName,
+        tagline: `${propertyType} • Hospitality & Verified Safe Stay`,
+        description,
+        ownerName,
+        phone,
+        whatsappNumber: whatsappNumber || phone,
+        email,
+        address,
+        city,
+        state,
+        pincode,
+        currency: '₹',
+        upiId: `${phone}@upi`,
+        images,
+        amenities,
+        entryFeePaid: true,
+        entryFeeAmount: 99,
+        entryFeeTxnId,
+        subscriptionPlan: 'trial_free_month',
+        trialDaysLeft: 30,
+        isRegistered: true,
+        createdAt: new Date().toISOString()
+      },
       dbOffline: true
     });
   }
 });
 
 /**
- * 3. GET FULL SYNCHRONIZED APP DATA
- * Returns hotel profile, rooms, bookings, verifications, and expenses from Neon PostgreSQL
+ * 4. GET FULL SYNCHRONIZED APP DATA & MULTI-VENDOR PROPERTIES
  */
 app.get('/api/data', async (req, res) => {
   try {
     const client = await pool.connect();
     try {
-      const hotelRes = await client.query('SELECT * FROM hotel_profile LIMIT 1');
+      const hotelsRes = await client.query('SELECT * FROM hotels ORDER BY created_at DESC');
       const roomsRes = await client.query('SELECT * FROM rooms ORDER BY room_number ASC');
       const bookingsRes = await client.query('SELECT * FROM bookings ORDER BY check_in_date DESC');
-      const verificationsRes = await client.query('SELECT * FROM guest_verifications ORDER BY check_in_date DESC');
       const expensesRes = await client.query('SELECT * FROM expenses ORDER BY date DESC');
+      const verificationsRes = await client.query('SELECT * FROM guest_verifications ORDER BY check_in_date DESC');
 
-      const hotelRow = hotelRes.rows[0];
-      const hotel = hotelRow ? {
-        name: hotelRow.name,
-        tagline: hotelRow.tagline || 'হোমষ্টে’ আৰু হোটেল মেনেজমেণ্ট',
-        ownerName: hotelRow.owner_name,
-        phone: hotelRow.phone,
-        whatsappNumber: hotelRow.whatsapp_number,
-        email: hotelRow.email || '',
-        address: hotelRow.address || '',
-        city: hotelRow.city || '',
-        state: hotelRow.state || 'Assam',
-        pincode: hotelRow.pincode || '',
+      const hotels = hotelsRes.rows.map(h => ({
+        id: h.id,
+        name: h.name,
+        propertyType: h.property_type || 'Hotel',
+        tagline: `${h.property_type || 'Hotel'} • Verified Safe Stay`,
+        description: h.description || '',
+        ownerName: h.owner_name || '',
+        phone: h.phone,
+        whatsappNumber: h.whatsapp_number || h.phone,
+        email: h.email || '',
+        address: h.address || '',
+        city: h.city || '',
+        state: h.state || 'Assam',
+        pincode: h.pincode || '',
         currency: '₹',
-        upiId: hotelRow.upi_id || '',
+        upiId: `${h.phone}@upi`,
         checkInStandardTime: '12:00 PM',
         checkOutStandardTime: '11:00 AM',
-        policeStationName: hotelRow.police_station_name || '',
-        policeStationWhatsApp: hotelRow.police_station_whatsapp || '',
-        policeStationEmail: hotelRow.police_station_email || '',
-        policeStationIncharge: hotelRow.police_station_incharge || '',
-        hotelLicenseNumber: hotelRow.hotel_license_number || '',
-        isRegistered: Boolean(hotelRow.is_registered)
-      } : null;
+        images: typeof h.images === 'string' ? JSON.parse(h.images) : (h.images || []),
+        amenities: typeof h.amenities === 'string' ? JSON.parse(h.amenities) : (h.amenities || []),
+        entryFeePaid: Boolean(h.entry_fee_paid),
+        entryFeeAmount: Number(h.entry_fee_amount || 99),
+        entryFeeTxnId: h.entry_fee_txnid || 'ORD-99-REG',
+        subscriptionPlan: h.subscription_plan || 'trial_free_month',
+        subscriptionExpiresAt: h.subscription_expires_at || '',
+        trialDaysLeft: Number(h.trial_days_left || 30),
+        policeStationName: h.police_station_name || '',
+        policeStationWhatsApp: h.police_station_whatsapp || '',
+        policeStationIncharge: h.police_station_incharge || '',
+        hotelLicenseNumber: h.hotel_license_number || '',
+        isRegistered: Boolean(h.is_registered),
+        createdAt: h.created_at ? new Date(h.created_at).toISOString() : new Date().toISOString()
+      }));
 
       const rooms = roomsRes.rows.map(r => ({
         id: r.id,
+        hotelId: r.hotel_id,
         roomNumber: r.room_number,
         type: r.type,
         basePrice: Number(r.base_price),
@@ -324,96 +536,133 @@ app.get('/api/data', async (req, res) => {
 
       const bookings = bookingsRes.rows.map(b => ({
         id: b.id,
+        hotelId: b.hotel_id,
+        customerId: b.customer_id,
         roomId: b.room_id,
         roomNumber: b.room_number,
         guestName: b.guest_name,
         guestPhone: b.guest_phone,
         guestEmail: b.guest_email || undefined,
-        channel: b.channel,
-        source: b.channel === 'online' ? 'booking_com' : 'walk_in',
+        channel: b.channel || 'offline',
+        source: b.source || 'walk_in',
+        portalBookingId: b.portal_booking_id,
         checkInDate: b.check_in_date,
         checkOutDate: b.check_out_date,
         checkInTime: b.check_in_time || '12:00 PM',
         checkOutTime: b.check_out_time || '11:00 AM',
-        guestCount: 2,
+        guestCount: b.guest_count || 2,
         totalAmount: Number(b.total_amount),
+        platformCommission: Number(b.platform_commission || 0),
+        hotelPayoutAmount: Number(b.hotel_payout_amount || b.total_amount),
+        commissionRate: b.channel === 'online' ? 0.05 : 0,
         advancePaid: Number(b.advance_paid || 0),
-        paymentStatus: Number(b.balance_due || 0) <= 0 ? 'paid' : (Number(b.advance_paid || 0) > 0 ? 'partial' : 'pending'),
-        paymentMethod: 'upi',
-        status: b.status,
+        paymentStatus: b.payment_status || 'paid',
+        paymentMethod: b.payment_method || 'cash',
+        status: b.status || 'confirmed',
         notes: b.notes || '',
         createdAt: b.created_at ? new Date(b.created_at).toISOString() : new Date().toISOString()
       }));
 
-      const verifications = verificationsRes.rows.map(v => ({
-        id: v.id,
-        bookingId: v.booking_id || undefined,
-        roomNumber: v.room_number,
-        guestName: v.guest_name,
-        age: v.age ? Number(v.age) : undefined,
-        gender: v.gender || 'Male',
-        dob: v.dob || undefined,
-        idType: v.id_type,
-        idNumber: v.id_number,
-        address: v.address,
-        nationality: v.nationality || 'Indian',
-        phone: v.phone,
-        email: v.email || undefined,
-        checkInDate: v.check_in_date,
-        checkInTime: v.check_in_time || '12:00 PM',
-        checkOutDate: v.check_out_date,
-        purposeOfVisit: v.purpose_of_visit || 'Tourism / Leisure',
-        vehicleNumber: v.vehicle_number || undefined,
-        idPhotoUrl: v.id_photo_url || undefined,
-        policeReportStatus: v.police_report_status || 'pending',
-        submittedAt: v.submitted_at || undefined,
-        dispatchMethod: v.dispatch_method || undefined,
-        notes: v.notes || undefined
-      }));
-
-      const expenses = expensesRes.rows.map(e => ({
-        id: e.id,
-        title: e.title,
-        amount: Number(e.amount),
-        category: e.category,
-        date: e.date,
-        paymentMethod: e.payment_method || 'upi',
-        notes: e.notes || undefined,
-        createdAt: e.created_at ? new Date(e.created_at).toISOString() : new Date().toISOString()
-      }));
-
       return res.json({
         success: true,
-        hotel,
+        hotels,
         rooms,
         bookings,
-        verifications,
-        expenses,
-        isRegistered: hotel?.isRegistered || false
+        expenses: expensesRes.rows,
+        verifications: verificationsRes.rows
       });
     } finally {
       client.release();
     }
   } catch (err: any) {
-    console.error('Error fetching data from Neon DB:', err.message);
     return res.status(500).json({ success: false, error: err.message });
   }
 });
 
 /**
- * 4. BOOKINGS CRUD WITH NEON POSTGRESQL
+ * 5. ADMIN PLATFORM METRICS & MONTHLY REPORT DATA
+ */
+app.get('/api/admin/metrics', async (req, res) => {
+  try {
+    const client = await pool.connect();
+    try {
+      const hotelsRes = await client.query('SELECT * FROM hotels');
+      const bookingsRes = await client.query('SELECT * FROM bookings');
+
+      const hotels = hotelsRes.rows;
+      const bookings = bookingsRes.rows;
+
+      const hotelsCount = hotels.filter(h => (h.property_type || '').toLowerCase().includes('hotel')).length;
+      const guestHousesCount = hotels.filter(h => (h.property_type || '').toLowerCase().includes('guest') || (h.property_type || '').toLowerCase().includes('home')).length;
+      const hallsCount = hotels.filter(h => (h.property_type || '').toLowerCase().includes('hall') || (h.property_type || '').toLowerCase().includes('resort')).length;
+
+      const onlineBookings = bookings.filter(b => b.channel === 'online');
+      const totalOnlineRevenue = onlineBookings.reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
+      const totalCommission = onlineBookings.reduce((sum, b) => sum + Number(b.platform_commission || Math.round(Number(b.total_amount) * 0.05)), 0);
+      const totalEntryFees = hotels.length * 99;
+
+      // Monthly Property-wise breakdown
+      const propertyBreakdown = hotels.map(h => {
+        const hotelBookings = bookings.filter(b => b.hotel_id === h.id && b.channel === 'online');
+        const count = hotelBookings.length;
+        const revenue = hotelBookings.reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
+        const commission = hotelBookings.reduce((sum, b) => sum + Number(b.platform_commission || Math.round(Number(b.total_amount) * 0.05)), 0);
+
+        return {
+          hotelId: h.id,
+          hotelName: h.name,
+          propertyType: h.property_type || 'Hotel',
+          city: h.city || 'Assam',
+          phone: h.phone,
+          onlineBookingsCount: count,
+          monthlyRevenue: revenue,
+          platformCommission: commission,
+          netHotelPayout: revenue - commission
+        };
+      });
+
+      return res.json({
+        success: true,
+        metrics: {
+          totalPropertiesCount: hotels.length,
+          hotelsCount,
+          guestHousesCount,
+          hallsCount,
+          totalOnlineBookingsCount: onlineBookings.length,
+          totalOnlineRevenue,
+          totalPlatformCommissionCollected: totalCommission,
+          totalEntryFeesCollected: totalEntryFees,
+          totalPlatformEarnings: totalCommission + totalEntryFees
+        },
+        propertyBreakdown
+      });
+    } finally {
+      client.release();
+    }
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * 6. BOOKINGS CRUD WITH 5% COMMISSION LOGIC
  */
 app.post('/api/bookings', async (req, res) => {
   const b = req.body;
+  const isOnline = b.channel === 'online';
+  const commission = isOnline ? Math.round(Number(b.totalAmount) * 0.05) : 0;
+  const hotelPayout = Number(b.totalAmount) - commission;
+
   try {
     const client = await pool.connect();
     try {
       await client.query(`
         INSERT INTO bookings (
-          id, room_id, room_number, guest_name, guest_phone, guest_email,
-          check_in_date, check_in_time, check_out_date, check_out_time,
-          total_amount, advance_paid, balance_due, channel, status, notes
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+          id, hotel_id, customer_id, room_id, room_number, guest_name, guest_phone, guest_email,
+          channel, source, portal_booking_id, check_in_date, check_in_time, check_out_date, check_out_time,
+          nights, guest_count, room_charge, platform_commission, hotel_payout_amount, total_amount,
+          advance_paid, balance_due, payment_status, payment_method, status, notes
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27)
         ON CONFLICT (id) DO UPDATE SET
           room_id = EXCLUDED.room_id,
           room_number = EXCLUDED.room_number,
@@ -424,24 +673,36 @@ app.post('/api/bookings', async (req, res) => {
           total_amount = EXCLUDED.total_amount,
           advance_paid = EXCLUDED.advance_paid,
           balance_due = EXCLUDED.balance_due,
-          channel = EXCLUDED.channel,
+          platform_commission = EXCLUDED.platform_commission,
+          hotel_payout_amount = EXCLUDED.hotel_payout_amount,
           status = EXCLUDED.status,
           notes = EXCLUDED.notes
       `, [
         b.id,
+        b.hotelId || 'default',
+        b.customerId || null,
         b.roomId,
         b.roomNumber,
         b.guestName,
         b.guestPhone,
         b.guestEmail || null,
+        b.channel || 'offline',
+        b.source || 'walk_in',
+        b.portalBookingId || null,
         b.checkInDate,
         b.checkInTime || '12:00 PM',
         b.checkOutDate,
         b.checkOutTime || '11:00 AM',
+        b.nights || 1,
+        b.guestCount || 2,
+        b.roomCharge || b.totalAmount,
+        commission,
+        hotelPayout,
         b.totalAmount,
         b.advancePaid || 0,
-        (b.totalAmount - (b.advancePaid || 0)),
-        b.channel || 'offline',
+        Math.max(0, b.totalAmount - (b.advancePaid || 0)),
+        b.paymentStatus || 'paid',
+        b.paymentMethod || 'cash',
         b.status || 'confirmed',
         b.notes || ''
       ]);
@@ -450,53 +711,6 @@ app.post('/api/bookings', async (req, res) => {
       client.release();
     }
   } catch (err: any) {
-    console.error('Error saving booking to DB:', err);
-    return res.json({ success: true, booking: b, dbError: err.message });
-  }
-});
-
-app.put('/api/bookings/:id', async (req, res) => {
-  const { id } = req.params;
-  const b = req.body;
-  try {
-    const client = await pool.connect();
-    try {
-      await client.query(`
-        UPDATE bookings SET
-          room_id = $1,
-          room_number = $2,
-          guest_name = $3,
-          guest_phone = $4,
-          check_in_date = $5,
-          check_out_date = $6,
-          total_amount = $7,
-          advance_paid = $8,
-          balance_due = $9,
-          channel = $10,
-          status = $11,
-          notes = $12
-        WHERE id = $13
-      `, [
-        b.roomId,
-        b.roomNumber,
-        b.guestName,
-        b.guestPhone,
-        b.checkInDate,
-        b.checkOutDate,
-        b.totalAmount,
-        b.advancePaid || 0,
-        (b.totalAmount - (b.advancePaid || 0)),
-        b.channel || 'offline',
-        b.status || 'confirmed',
-        b.notes || '',
-        id
-      ]);
-      return res.json({ success: true, booking: b });
-    } finally {
-      client.release();
-    }
-  } catch (err: any) {
-    console.error('Error updating booking in DB:', err);
     return res.json({ success: true, booking: b, dbError: err.message });
   }
 });
@@ -512,275 +726,44 @@ app.delete('/api/bookings/:id', async (req, res) => {
       client.release();
     }
   } catch (err: any) {
-    console.error('Error deleting booking in DB:', err);
     return res.json({ success: true, id, dbError: err.message });
   }
 });
 
 /**
- * 5. POLICE GUEST VERIFICATION CRUD
- */
-app.post('/api/verifications', async (req, res) => {
-  const v = req.body;
-  try {
-    const client = await pool.connect();
-    try {
-      await client.query(`
-        INSERT INTO guest_verifications (
-          id, booking_id, room_number, guest_name, age, gender, dob, id_type, id_number,
-          address, nationality, phone, email, check_in_date, check_in_time, check_out_date,
-          purpose_of_visit, vehicle_number, id_photo_url, police_report_status, dispatch_method, submitted_at, notes
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
-        ON CONFLICT (id) DO UPDATE SET
-          guest_name = EXCLUDED.guest_name,
-          id_type = EXCLUDED.id_type,
-          id_number = EXCLUDED.id_number,
-          address = EXCLUDED.address,
-          police_report_status = EXCLUDED.police_report_status,
-          dispatch_method = EXCLUDED.dispatch_method,
-          submitted_at = EXCLUDED.submitted_at
-      `, [
-        v.id,
-        v.bookingId || null,
-        v.roomNumber,
-        v.guestName,
-        v.age ? Number(v.age) : null,
-        v.gender || 'Male',
-        v.dob || null,
-        v.idType,
-        v.idNumber,
-        v.address,
-        v.nationality || 'Indian',
-        v.phone,
-        v.email || null,
-        v.checkInDate,
-        v.checkInTime || '12:00 PM',
-        v.checkOutDate,
-        v.purposeOfVisit || 'Tourism / Leisure',
-        v.vehicleNumber || null,
-        v.idPhotoUrl || null,
-        v.policeReportStatus || 'pending',
-        v.dispatchMethod || null,
-        v.submittedAt || null,
-        v.notes || null
-      ]);
-      return res.json({ success: true, verification: v });
-    } finally {
-      client.release();
-    }
-  } catch (err: any) {
-    console.error('Error saving verification to DB:', err);
-    return res.json({ success: true, verification: v, dbError: err.message });
-  }
-});
-
-app.put('/api/verifications/:id', async (req, res) => {
-  const { id } = req.params;
-  const v = req.body;
-  try {
-    const client = await pool.connect();
-    try {
-      await client.query(`
-        UPDATE guest_verifications SET
-          guest_name = $1,
-          id_type = $2,
-          id_number = $3,
-          address = $4,
-          phone = $5,
-          police_report_status = $6,
-          dispatch_method = $7,
-          submitted_at = $8
-        WHERE id = $9
-      `, [
-        v.guestName,
-        v.idType,
-        v.idNumber,
-        v.address,
-        v.phone,
-        v.policeReportStatus,
-        v.dispatchMethod || null,
-        v.submittedAt || null,
-        id
-      ]);
-      return res.json({ success: true, verification: v });
-    } finally {
-      client.release();
-    }
-  } catch (err: any) {
-    console.error('Error updating verification in DB:', err);
-    return res.json({ success: true, verification: v, dbError: err.message });
-  }
-});
-
-app.delete('/api/verifications/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const client = await pool.connect();
-    try {
-      await client.query('DELETE FROM guest_verifications WHERE id = $1', [id]);
-      return res.json({ success: true, id });
-    } finally {
-      client.release();
-    }
-  } catch (err: any) {
-    console.error('Error deleting verification from DB:', err);
-    return res.json({ success: true, id, dbError: err.message });
-  }
-});
-
-/**
- * 6. EXPENSES CRUD
- */
-app.post('/api/expenses', async (req, res) => {
-  const e = req.body;
-  try {
-    const client = await pool.connect();
-    try {
-      await client.query(`
-        INSERT INTO expenses (id, title, amount, category, date, payment_method, notes)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        ON CONFLICT (id) DO UPDATE SET
-          title = EXCLUDED.title,
-          amount = EXCLUDED.amount,
-          category = EXCLUDED.category,
-          date = EXCLUDED.date,
-          payment_method = EXCLUDED.payment_method,
-          notes = EXCLUDED.notes
-      `, [
-        e.id,
-        e.title,
-        e.amount,
-        e.category,
-        e.date,
-        e.paymentMethod || 'cash',
-        e.notes || ''
-      ]);
-      return res.json({ success: true, expense: e });
-    } finally {
-      client.release();
-    }
-  } catch (err: any) {
-    console.error('Error saving expense in DB:', err);
-    return res.json({ success: true, expense: e, dbError: err.message });
-  }
-});
-
-app.delete('/api/expenses/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const client = await pool.connect();
-    try {
-      await client.query('DELETE FROM expenses WHERE id = $1', [id]);
-      return res.json({ success: true, id });
-    } finally {
-      client.release();
-    }
-  } catch (err: any) {
-    console.error('Error deleting expense in DB:', err);
-    return res.json({ success: true, id, dbError: err.message });
-  }
-});
-
-/**
- * 7. HOTEL PROFILE UPDATE
- */
-app.put('/api/hotel', async (req, res) => {
-  const h = req.body;
-  try {
-    const client = await pool.connect();
-    try {
-      await client.query(`
-        UPDATE hotel_profile SET
-          name = $1,
-          owner_name = $2,
-          phone = $3,
-          whatsapp_number = $4,
-          email = $5,
-          address = $6,
-          city = $7,
-          state = $8,
-          pincode = $9,
-          police_station_name = $10,
-          police_station_whatsapp = $11,
-          police_station_email = $12,
-          police_station_incharge = $13,
-          hotel_license_number = $14,
-          updated_at = NOW()
-        WHERE id = 'hotel_primary'
-      `, [
-        h.name,
-        h.ownerName || '',
-        h.phone,
-        h.whatsappNumber || h.phone,
-        h.email || '',
-        h.address || '',
-        h.city || '',
-        h.state || '',
-        h.pincode || '',
-        h.policeStationName || '',
-        h.policeStationWhatsApp || '',
-        h.policeStationEmail || '',
-        h.policeStationIncharge || '',
-        h.hotelLicenseNumber || ''
-      ]);
-      return res.json({ success: true, hotel: h });
-    } finally {
-      client.release();
-    }
-  } catch (err: any) {
-    console.error('Error updating hotel profile in DB:', err);
-    return res.json({ success: true, hotel: h, dbError: err.message });
-  }
-});
-
-/**
- * AI-Powered ID Card Scanner Endpoint (Aadhaar, Passport, Voter ID, Driving License)
- * Powered by Gemini 3.8 Flash
+ * 7. AI-POWERED ID CARD SCANNER (Aadhaar, Passport, Voter ID)
  */
 app.post('/api/extract-id', async (req, res) => {
   try {
     const { imageBase64, mimeType = 'image/jpeg' } = req.body;
-
     if (!imageBase64) {
-      return res.status(400).json({
-        success: false,
-        error: 'No image provided. Please upload or capture an ID document.'
-      });
+      return res.status(400).json({ success: false, error: 'No image provided.' });
     }
 
     const cleanBase64 = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
-
     const apiKey = process.env.GEMINI_API_KEY;
+
     if (!apiKey) {
-      console.warn('GEMINI_API_KEY not configured. Falling back to structured heuristic extractor.');
       return res.json({
         success: false,
         isFallback: true,
-        error: 'GEMINI_API_KEY not configured on server.',
-        message: 'Please configure GEMINI_API_KEY in environment or use manual entry / test presets.'
+        error: 'GEMINI_API_KEY not configured.',
+        message: 'Please review manually or configure API key.'
       });
     }
 
     const ai = new GoogleGenAI();
-
-    const prompt = `You are an expert optical document recognition and KYC data extraction engine for Indian hotels, guest houses, and homestays complying with local police verification rules (Form C and Daily Guest Register).
-Analyze this uploaded Indian Government ID card (Aadhaar Card, Indian Passport, Election Commission Voter ID, or Driving License).
-
-Extract all readable information and respond with ONLY a valid, raw JSON object (no markdown quotes, no triple backticks, no extra text).
-JSON format:
+    const prompt = `Extract Indian Government ID details from this card in JSON:
 {
-  "guestName": "Full name of the person in Title Case",
-  "idType": "aadhaar" or "passport" or "voter_id" or "driving_license" or "other",
-  "idNumber": "Document ID number (e.g., 12-digit Aadhaar, Passport number, Voter EPIC, Driving License number)",
+  "guestName": "Full name in Title Case",
+  "idType": "aadhaar" or "passport" or "voter_id" or "driving_license",
+  "idNumber": "Document ID Number",
   "gender": "Male" or "Female" or "Other",
   "age": number or null,
-  "dob": "YYYY-MM-DD" or "DD/MM/YYYY" or null,
-  "address": "Full permanent address including village/city, district, state and pin code",
-  "nationality": "Indian" or specific country,
-  "phone": "Mobile number if printed on document or null"
+  "address": "Full permanent address including district, state and pin",
+  "phone": "Mobile number or null"
 }
-
-If any field is unclear or missing, provide your best deduction or null. Do not invent completely fake names; accurately transcribe what is visible on the card.`;
+Respond with ONLY valid JSON.`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-3.8-flash',
@@ -788,58 +771,26 @@ If any field is unclear or missing, provide your best deduction or null. Do not 
         {
           role: 'user',
           parts: [
-            {
-              inlineData: {
-                mimeType,
-                data: cleanBase64
-              }
-            },
-            {
-              text: prompt
-            }
+            { inlineData: { mimeType, data: cleanBase64 } },
+            { text: prompt }
           ]
         }
       ]
     });
 
     const responseText = response.text || '';
-    
     let parsedData = {};
     try {
-      const cleanJson = responseText
-        .replace(/^```json\s*/i, '')
-        .replace(/^```\s*/i, '')
-        .replace(/\s*```$/i, '')
-        .trim();
+      const cleanJson = responseText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
       parsedData = JSON.parse(cleanJson);
-    } catch (parseErr) {
-      console.error('Failed to parse Gemini JSON output:', responseText, parseErr);
-      return res.json({
-        success: false,
-        rawText: responseText,
-        error: 'Could not structure ID information automatically. Please review manually.'
-      });
+    } catch {
+      return res.json({ success: false, rawText: responseText });
     }
 
-    return res.json({
-      success: true,
-      data: parsedData,
-      rawOutput: responseText
-    });
+    return res.json({ success: true, data: parsedData });
   } catch (err: any) {
-    console.error('ID Extraction API error:', err);
-    return res.status(500).json({
-      success: false,
-      error: err.message || 'Error processing document image'
-    });
+    return res.status(500).json({ success: false, error: err.message });
   }
-});
-
-// Police Dispatch Log recording
-app.post('/api/police-dispatch-log', (req, res) => {
-  const { hotelName, guestCount, dispatchMethod, timestamp, thana } = req.body;
-  console.log(`[POLICE DISPATCH] ${timestamp} - ${hotelName} reported ${guestCount} guests to ${thana} via ${dispatchMethod}`);
-  res.json({ success: true, loggedAt: new Date().toISOString() });
 });
 
 // Mount Vite in development or serve static in production
@@ -860,7 +811,7 @@ async function startServer() {
   }
 
   app.listen(Number(PORT), '0.0.0.0', () => {
-    console.log(`🚀 Orderfix Server & Police Portal running at http://0.0.0.0:${PORT}`);
+    console.log(`🚀 Orderfix Server & Multi-Vendor Engine running at http://0.0.0.0:${PORT}`);
   });
 }
 

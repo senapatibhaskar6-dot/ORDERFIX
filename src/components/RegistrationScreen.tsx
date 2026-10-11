@@ -26,10 +26,13 @@ import {
   Trash2,
   Lock,
   Camera,
-  Layers
+  Layers,
+  Eye,
+  EyeOff,
+  LogIn
 } from 'lucide-react';
 import { EntryFeePaymentModal } from './EntryFeePaymentModal';
-import { SAMPLE_HOTEL_IMAGES, KAZIRANGA_HOTEL_IMAGES } from '../utils/storage';
+import { SAMPLE_HOTEL_IMAGES, KAZIRANGA_HOTEL_IMAGES, saveAuthUser } from '../utils/storage';
 
 interface RegistrationScreenProps {
   onCompleteRegistration: (
@@ -37,6 +40,7 @@ interface RegistrationScreenProps {
     roomsData: Room[]
   ) => void;
   onCancel?: () => void;
+  onOpenLogin?: () => void;
 }
 
 const AVAILABLE_AMENITIES = [
@@ -56,11 +60,15 @@ const AVAILABLE_AMENITIES = [
 
 export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({
   onCompleteRegistration,
-  onCancel
+  onCancel,
+  onOpenLogin
 }) => {
   // Form States
   const [hotelName, setHotelName] = useState('');
   const [ownerName, setOwnerName] = useState('');
+  const [password, setPassword] = useState('orderfix123');
+  const [confirmPassword, setConfirmPassword] = useState('orderfix123');
+  const [showPassword, setShowPassword] = useState(false);
   const [propertyType, setPropertyType] = useState<'Hotel' | 'Homestay' | 'Resort' | 'Guest House' | 'Lodge'>('Homestay');
   const [description, setDescription] = useState('');
   const [phone, setPhone] = useState('');
@@ -160,6 +168,14 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({
       setErrorMsg('অনুগ্ৰহ কৰি মোবাইল নম্বৰ লিখক (Mobile Phone is required)');
       return;
     }
+    if (!password || password.length < 4) {
+      setErrorMsg('অনুগ্ৰহ কৰি অতি কমেও ৪টা বৰ্ণৰ পাসৱৰ্ড ছেট কৰক (Password must be at least 4 characters)');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setErrorMsg('পাসৱৰ্ড দুয়োটা মিল খোৱা নাই (Passwords do not match)');
+      return;
+    }
     if (images.length < 1 || !images[0]) {
       setErrorMsg('অনুগ্ৰহ কৰি অতি কমেও এটা ফটো আপলোড কৰক (Upload at least 1 image)');
       return;
@@ -174,6 +190,37 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({
 
     const effectiveWhatsApp = sameAsPhone ? phone : (whatsappNumber || phone);
     const hotelId = `htl-${Date.now().toString().slice(-6)}`;
+
+    // Register owner account with password
+    const cleanPhone = phone.replace(/\D/g, '').slice(-10);
+    fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: ownerName.trim() || hotelName.trim(),
+        phone: cleanPhone,
+        email: email.trim(),
+        password,
+        role: 'owner',
+        hotelId
+      })
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.user) {
+          saveAuthUser(data.user);
+        }
+      })
+      .catch(() => {
+        saveAuthUser({
+          id: `usr-${cleanPhone}`,
+          name: ownerName.trim() || hotelName.trim(),
+          phone: cleanPhone,
+          email: email.trim(),
+          role: 'owner',
+          hotelId
+        });
+      });
 
     // Prepare client-side hotel object with 1 Month Free Subscription & Paid Entry Fee
     const newHotelProfile: HotelProfile = {
@@ -250,6 +297,18 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({
               </span>
 
               <div className="flex items-center gap-2">
+                {onOpenLogin && (
+                  <button
+                    type="button"
+                    onClick={onOpenLogin}
+                    className="text-[11px] text-white font-extrabold cursor-pointer bg-teal-500/30 hover:bg-teal-500/50 px-2.5 py-1 rounded-lg border border-teal-400/40 transition-colors flex items-center gap-1"
+                    title="Sign In to Existing Account"
+                  >
+                    <LogIn className="w-3.5 h-3.5 text-teal-300" />
+                    <span>লগইন (Sign In)</span>
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={handleQuickFillSample}
@@ -456,6 +515,53 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({
               </div>
             </div>
 
+            {/* Account Password Setup for Hotel Owner */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                    <Lock className="w-3.5 h-3.5 text-teal-600" />
+                    <span>ডেশ্ববৰ্ড পাসৱৰ্ড ছেট কৰক (Create Password) *</span>
+                  </label>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    placeholder="Minimum 4 characters"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-slate-900 font-mono font-bold text-xs bg-white focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  পাসৱৰ্ড নিশ্চিত কৰক (Confirm Password) *
+                </label>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  placeholder="Re-enter password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-slate-900 font-mono font-bold text-xs bg-white focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
+                />
+              </div>
+              <div className="sm:col-span-2 text-[10px] text-slate-500 flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                <span>পঞ্জীয়নৰ পিছত এই ফোন নম্বৰ আৰু পাসৱৰ্ডেৰে যিকোনো সময়তে আপোনাৰ ডেশ্ববৰ্ডত লগইন কৰিব পাৰিব।</span>
+              </div>
+            </div>
+
             {/* Location & Address */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="sm:col-span-2">
@@ -530,9 +636,20 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({
                       )}
 
                       <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-2">
-                        <label className="text-[10px] font-bold bg-white text-slate-900 px-2 py-1 rounded-md cursor-pointer hover:bg-slate-100 flex items-center gap-1">
+                        <label className="text-[10px] font-bold bg-teal-500 text-slate-950 px-2 py-1 rounded-md cursor-pointer hover:bg-teal-400 flex items-center gap-1 shadow-sm">
+                          <Camera className="w-3 h-3" />
+                          <span>কেমেৰা</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            className="hidden"
+                            onChange={(e) => handleFileUpload(idx, e)}
+                          />
+                        </label>
+                        <label className="text-[10px] font-bold bg-white text-slate-900 px-2 py-1 rounded-md cursor-pointer hover:bg-slate-100 flex items-center gap-1 shadow-sm">
                           <Upload className="w-3 h-3" />
-                          <span>আপলোড</span>
+                          <span>গেলৰী</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -541,6 +658,32 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({
                           />
                         </label>
                       </div>
+                    </div>
+
+                    {/* Touch-Friendly Action Buttons for Mobile Screen */}
+                    <div className="grid grid-cols-2 gap-1">
+                      <label className="text-[10px] font-black bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 py-1 px-1 rounded-lg cursor-pointer flex items-center justify-center gap-1 shadow-2xs active:scale-95 transition-all text-center">
+                        <Camera className="w-3 h-3 text-teal-600 shrink-0" />
+                        <span className="truncate">কেমেৰা</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          className="hidden"
+                          onChange={(e) => handleFileUpload(idx, e)}
+                        />
+                      </label>
+
+                      <label className="text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 py-1 px-1 rounded-lg cursor-pointer flex items-center justify-center gap-1 shadow-2xs active:scale-95 transition-all text-center">
+                        <Upload className="w-3 h-3 text-slate-500 shrink-0" />
+                        <span className="truncate">গেলৰী</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleFileUpload(idx, e)}
+                        />
+                      </label>
                     </div>
 
                     <div className="flex items-center gap-1">
@@ -671,6 +814,18 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="text-[11px] text-slate-500 text-center sm:text-left">
                 🔒 ৫% প্লেটফৰ্ম কমিছন আৰু ৯৫% হোটেল পেমেন্ট সুৰক্ষা সমৰ্থিত।
+                {onOpenLogin && (
+                  <div className="mt-1">
+                    ইতিমধ্যে একাউণ্ট আছে?{' '}
+                    <button
+                      type="button"
+                      onClick={onOpenLogin}
+                      className="text-teal-700 font-extrabold hover:underline cursor-pointer"
+                    >
+                      লগইন কৰক (Sign In)
+                    </button>
+                  </div>
+                )}
               </div>
 
               <button
