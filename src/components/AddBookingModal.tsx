@@ -136,7 +136,8 @@ export const AddBookingModal: React.FC<AddBookingModalProps> = ({
       return;
     }
 
-    const split = calculatePlatformCommission(Number(totalAmount) || 0, channel);
+    const roomTariff = Number(totalAmount) || 0;
+    const split = calculatePlatformCommission(roomTariff, channel);
 
     const newBooking: Booking = {
       id: `bk-${Date.now().toString().slice(-6)}`,
@@ -152,10 +153,10 @@ export const AddBookingModal: React.FC<AddBookingModalProps> = ({
       checkOutDate,
       checkInTime: '12:00 PM',
       guestCount,
-      totalAmount: Number(totalAmount) || 0,
+      totalAmount: split.totalWithCommission,
       advancePaid: Number(advancePaid) || 0,
       paymentStatus:
-        Number(advancePaid) >= Number(totalAmount)
+        Number(advancePaid) >= split.totalWithCommission
           ? 'paid'
           : Number(advancePaid) > 0
           ? 'partial'
@@ -577,26 +578,32 @@ export const AddBookingModal: React.FC<AddBookingModalProps> = ({
               </span>
             </div>
 
-            {/* 5% Platform Commission & 95% Hotel Split Information */}
+            {/* 5% Platform Commission & 100% Hotel Room Tariff Information */}
             {channel === 'online' ? (
               <div className="bg-teal-50/80 border border-teal-200 rounded-xl p-3 space-y-1.5 text-xs text-teal-950 mt-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-700 font-bold">হোটেল কোঠাৰ ভাৰা (100% Hotel Room Tariff):</span>
+                  <span className="font-mono font-black text-slate-950">
+                    ₹{Number(totalAmount || 0).toLocaleString('en-IN')}
+                  </span>
+                </div>
                 <div className="flex items-center justify-between font-bold">
                   <span className="flex items-center gap-1">
                     <Sparkles className="w-3.5 h-3.5 text-teal-600" />
-                    <span>অনলাইন ৫% প্লেটফৰ্ম কমিছন (5% Platform Fee):</span>
+                    <span>ৰূম টেৰিফৰ ওপৰত ৫% প্লেটফৰ্ম কমিছন (5% Platform Fee):</span>
                   </span>
                   <span className="font-mono font-extrabold text-teal-800">
-                    ₹{Math.round(totalAmount * 0.05).toLocaleString('en-IN')}
+                    +₹{Math.round((Number(totalAmount) || 0) * 0.05).toLocaleString('en-IN')}
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-600 font-medium">হোটেল মালিকৰ প্ৰাপ্য (95% Hotel Net Payout):</span>
-                  <span className="font-mono font-black text-slate-950">
-                    ₹{(totalAmount - Math.round(totalAmount * 0.05)).toLocaleString('en-IN')}
+                <div className="flex items-center justify-between pt-1 border-t border-teal-200/60 font-black text-slate-900">
+                  <span>মুঠ গ্ৰাহকৰ বিলিং (Total Customer Billing):</span>
+                  <span className="font-mono text-emerald-700 text-sm">
+                    ₹{(Number(totalAmount || 0) + Math.round((Number(totalAmount) || 0) * 0.05)).toLocaleString('en-IN')}
                   </span>
                 </div>
-                <div className="text-[10px] text-teal-700 pt-1 border-t border-teal-200/60 leading-tight">
-                  ✓ ৫% কমিছন প্লেটফৰ্ম ৱালেটলৈ যাব আৰু ৯৫% হোটেলৰ পঞ্জীকৃত একাউণ্টলৈ যাব।
+                <div className="text-[10px] text-teal-700 pt-0.5 leading-tight font-medium">
+                  ✓ কোঠাৰ সম্পূৰ্ণ ১০০% ভাৰা হোটেল মালিকে পাব আৰু টেৰিফৰ ওপৰত ৫% অতিৰিক্ত কমিছন প্লেটফৰ্মৰ মালিকে পাব।
                 </div>
               </div>
             ) : (

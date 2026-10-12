@@ -166,7 +166,17 @@ export const PrintSlipModal: React.FC<PrintSlipModalProps> = ({
             </div>
             <div className="p-4 space-y-2 text-xs">
               <div className="flex justify-between text-slate-700">
-                <span>Room Charges ({nights} nights)</span>
+                <span>Room Tariff ({nights} {nights === 1 ? 'night' : 'nights'})</span>
+                <span>₹{(booking.hotelPayoutAmount || (booking.totalAmount - (booking.platformCommission || 0))).toLocaleString('en-IN')}</span>
+              </div>
+              {booking.channel === 'online' && (booking.platformCommission || 0) > 0 && (
+                <div className="flex justify-between text-teal-800 font-medium">
+                  <span>Platform Fee (5% on room tariff)</span>
+                  <span>+ ₹{booking.platformCommission.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-slate-900 font-bold border-t pt-1">
+                <span>Total Billed Amount</span>
                 <span>₹{booking.totalAmount.toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between text-emerald-700 font-medium">

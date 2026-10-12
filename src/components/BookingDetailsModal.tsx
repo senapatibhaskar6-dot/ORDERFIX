@@ -249,17 +249,20 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
             {/* Platform Commission Split */}
             {booking.channel === 'online' ? (
               <div className="pt-2 border-t border-slate-200 mt-2 bg-teal-50/70 p-2.5 rounded-xl text-xs space-y-1">
-                <div className="flex justify-between font-bold text-teal-900">
-                  <span>৫% প্লেটফৰ্ম কমিছন (5% Platform Fee):</span>
-                  <span className="font-mono font-extrabold text-teal-800">
-                    ₹{(booking.platformCommission || Math.round(booking.totalAmount * 0.05)).toLocaleString('en-IN')}
+                <div className="flex justify-between text-slate-700 font-semibold">
+                  <span>হোটেল কোঠাৰ ভাৰা (100% Hotel Room Tariff):</span>
+                  <span className="font-mono font-black text-slate-900">
+                    ₹{(booking.hotelPayoutAmount || (booking.totalAmount - (booking.platformCommission || 0))).toLocaleString('en-IN')}
                   </span>
                 </div>
-                <div className="flex justify-between text-slate-700 font-semibold">
-                  <span>হোটেলৰ নীট প্ৰাপ্য (95% Hotel Payout):</span>
-                  <span className="font-mono font-black text-slate-900">
-                    ₹{(booking.hotelPayoutAmount || (booking.totalAmount - Math.round(booking.totalAmount * 0.05))).toLocaleString('en-IN')}
+                <div className="flex justify-between font-bold text-teal-900">
+                  <span>ৰূম টেৰিফৰ ওপৰত ৫% প্লেটফৰ্ম মাচুল (5% Fee):</span>
+                  <span className="font-mono font-extrabold text-teal-800">
+                    +₹{(booking.platformCommission || Math.round((booking.hotelPayoutAmount || booking.totalAmount) * 0.05)).toLocaleString('en-IN')}
                   </span>
+                </div>
+                <div className="text-[10px] text-teal-700 pt-0.5 leading-tight">
+                  ✓ হোটেলৰ সম্পূৰ্ণ ১০০% কোঠাৰ ভাৰা হোটেল মালিকৰ প্ৰাপ্য আৰু টেৰিফৰ ওপৰত ৫% অতিৰিক্ত প্লেটফৰ্ম মাচুল প্ৰযোজ্য।
                 </div>
               </div>
             ) : (

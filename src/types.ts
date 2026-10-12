@@ -76,10 +76,10 @@ export interface Booking {
   portalBookingId?: string;
   idVerification?: GuestVerificationData;
   
-  // 5% Platform Commission & Automated Split Fields
+  // 5% Platform Commission & 100% Hotel Room Tariff Fields
   commissionRate: number; // e.g., 0.05 (5% for online, 0 for offline walk-in)
-  platformCommission: number; // 5% amount for platform owner
-  hotelPayoutAmount: number; // 95% amount for hotel owner
+  platformCommission: number; // 5% commission on top of room tariff for platform owner
+  hotelPayoutAmount: number; // 100% full room tariff for hotel owner
 }
 
 export interface HotelProfile {
@@ -182,8 +182,8 @@ export interface Expense {
 }
 
 export interface PlatformCommissionSummary {
-  totalPlatformRevenue: number; // 5% collected from all online bookings
-  totalHotelPayouts: number; // 95% sent to hotels
+  totalPlatformRevenue: number; // 5% collected on top of room tariff from online bookings
+  totalHotelPayouts: number; // 100% full room tariff sent to hotels
   totalOnlineBookingsCount: number;
   entryFeesCollected: number; // Number of hotels * ₹99
 }

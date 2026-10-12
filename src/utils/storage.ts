@@ -214,19 +214,21 @@ export const DEFAULT_ROOMS: Room[] = [
   }
 ];
 
-export function calculatePlatformCommission(amount: number, channel: ChannelType): {
+export function calculatePlatformCommission(roomTariff: number, channel: ChannelType): {
   commissionRate: number;
   platformCommission: number;
   hotelPayoutAmount: number;
+  totalWithCommission: number;
 } {
   if (channel === 'online') {
-    const commissionRate = 0.05; // 5% platform commission
-    const platformCommission = Math.round(amount * commissionRate);
-    const hotelPayoutAmount = amount - platformCommission;
-    return { commissionRate, platformCommission, hotelPayoutAmount };
+    const commissionRate = 0.05; // 5% platform commission charged on top of room tariff
+    const platformCommission = Math.round(roomTariff * commissionRate);
+    const hotelPayoutAmount = roomTariff; // 100% of room tariff goes directly to hotel owner!
+    const totalWithCommission = roomTariff + platformCommission;
+    return { commissionRate, platformCommission, hotelPayoutAmount, totalWithCommission };
   }
   // Direct offline walk-in bookings: 0% platform fee, 100% hotel owner payout
-  return { commissionRate: 0, platformCommission: 0, hotelPayoutAmount: amount };
+  return { commissionRate: 0, platformCommission: 0, hotelPayoutAmount: roomTariff, totalWithCommission: roomTariff };
 }
 
 export function isHotelRegistered(): boolean {
@@ -430,7 +432,10 @@ export function generateInitialBookings(): Booking[] {
     const split = calculatePlatformCommission(b.totalAmount, b.channel);
     return {
       ...b,
-      ...split
+      totalAmount: split.totalWithCommission,
+      commissionRate: split.commissionRate,
+      platformCommission: split.platformCommission,
+      hotelPayoutAmount: split.hotelPayoutAmount
     };
   });
 }
@@ -459,11 +464,18 @@ export function loadBookings(): Booking[] {
     const raw = localStorage.getItem(STORAGE_KEYS.BOOKINGS);
     if (raw) {
       const parsed = JSON.parse(raw);
-      // Ensure platform commission fields exist
+      // Ensure platform commission & 100% room tariff fields exist
       return parsed.map((b: any) => {
-        if (b.platformCommission === undefined) {
-          const split = calculatePlatformCommission(b.totalAmount, b.channel);
-          return { ...b, ...split };
+        if (b.platformCommission === undefined || b.hotelPayoutAmount === undefined || (b.channel === 'online' && b.hotelPayoutAmount < (b.totalAmount - b.platformCommission))) {
+          const roomTariff = b.hotelPayoutAmount || (b.channel === 'online' && b.platformCommission ? (b.totalAmount - b.platformCommission) : b.totalAmount);
+          const split = calculatePlatformCommission(roomTariff, b.channel);
+          return {
+            ...b,
+            totalAmount: split.totalWithCommission,
+            commissionRate: split.commissionRate,
+            platformCommission: split.platformCommission,
+            hotelPayoutAmount: split.hotelPayoutAmount
+          };
         }
         return b;
       });

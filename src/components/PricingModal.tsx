@@ -109,10 +109,10 @@ export const PricingModal: React.FC<PricingModalProps> = ({
             </div>
 
             <div className="p-3.5 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-950 space-y-1">
-              <div className="text-[10px] font-black uppercase text-indigo-800">৩. স্বচ্ছ স্প্লিট</div>
-              <div className="text-xl font-black text-indigo-950">৫% : ৯৫%</div>
+              <div className="text-[10px] font-black uppercase text-indigo-800">৩. ১০০% মালিক + ৫% মাচুল</div>
+              <div className="text-xl font-black text-indigo-950">১০০% : ৫%</div>
               <p className="text-[11px] text-indigo-800 leading-tight">
-                অনলাইন বুকিঙৰ ৫% প্লেটফৰ্মলৈ আৰু ৯৫% পোনে পোনে হোটেল মালিকৰ একাউণ্টলৈ।
+                হোটেলৰ কোঠাৰ সম্পূৰ্ণ ১০০% ভাৰা হোটেল মালিকে পাব আৰু টেৰিফৰ ওপৰত ৫% কমিছন প্লেটফৰ্ম মালিকে পাব।
               </p>
             </div>
 
@@ -126,16 +126,16 @@ export const PricingModal: React.FC<PricingModalProps> = ({
             </h4>
             <div className="grid grid-cols-3 gap-2 bg-white p-3 rounded-xl border border-slate-200 text-center">
               <div>
-                <span className="text-slate-500 block text-[10px]">গ্ৰাহকে দিয়া মূল্য</span>
-                <span className="text-sm font-black text-slate-900">₹২,০০০</span>
+                <span className="text-emerald-700 block text-[10px] font-bold">১০০% কোঠাৰ ভাৰা (মালিকলৈ)</span>
+                <span className="text-sm font-black text-emerald-700">₹২,০০০</span>
               </div>
               <div className="border-x border-slate-100">
-                <span className="text-teal-700 block text-[10px]">৫% প্লেটফৰ্ম কমিছন</span>
-                <span className="text-sm font-extrabold text-teal-800">₹১০০</span>
+                <span className="text-teal-700 block text-[10px] font-bold">৫% প্লেটফৰ্ম কমিছন</span>
+                <span className="text-sm font-extrabold text-teal-800">+₹১০০</span>
               </div>
               <div>
-                <span className="text-emerald-700 block text-[10px]">৯৫% হোটেল মালিকলৈ</span>
-                <span className="text-sm font-black text-emerald-700">₹১,৯০০</span>
+                <span className="text-slate-500 block text-[10px] font-bold">মুঠ গ্ৰাহকে দিয়া ধন</span>
+                <span className="text-sm font-black text-slate-900">₹২,১০০</span>
               </div>
             </div>
             <p className="text-[11px] text-slate-500">

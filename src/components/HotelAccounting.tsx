@@ -108,10 +108,13 @@ export const HotelAccounting: React.FC<HotelAccountingProps> = ({
   // Financial Calculations
   const totalGrossRevenue = filteredBookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
   const totalPlatformCommission = filteredBookings.reduce(
-    (sum, b) => sum + (b.platformCommission || (b.channel === 'online' ? Math.round(b.totalAmount * 0.05) : 0)),
+    (sum, b) => sum + (b.platformCommission || (b.channel === 'online' ? Math.round((b.hotelPayoutAmount || b.totalAmount) * 0.05) : 0)),
     0
   );
-  const netHotelRevenue = totalGrossRevenue - totalPlatformCommission;
+  const totalHotelRoomRevenue = filteredBookings.reduce(
+    (sum, b) => sum + (b.hotelPayoutAmount || (b.totalAmount - (b.platformCommission || 0))),
+    0
+  );
   const totalCollectedAdvance = filteredBookings.reduce((sum, b) => sum + (b.advancePaid || 0), 0);
   const totalPendingDue = filteredBookings.reduce(
     (sum, b) => sum + Math.max(0, (b.totalAmount || 0) - (b.advancePaid || 0)),
@@ -342,19 +345,19 @@ export const HotelAccounting: React.FC<HotelAccountingProps> = ({
           </p>
         </div>
 
-        {/* Card 3: 95% Hotel Net Revenue */}
+        {/* Card 3: 100% Hotel Room Tariff */}
         <div className="p-3.5 sm:p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between text-indigo-800 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider">৯৫% হোটেল প্ৰাপ্য</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider">১০০% হোটেল প্ৰাপ্য</span>
             <span className="p-1 rounded-lg bg-indigo-100 text-indigo-800">
               <Building className="w-3.5 h-3.5" />
             </span>
           </div>
           <div className="text-xl sm:text-2xl font-black text-indigo-950 tracking-tight">
-            ₹{netHotelRevenue.toLocaleString('en-IN')}
+            ₹{totalHotelRoomRevenue.toLocaleString('en-IN')}
           </div>
           <p className="text-[10px] text-indigo-700 mt-0.5">
-            হোটেলৰ নীট ৰাজহ (Net Tariff)
+            হোটেলৰ ১০০% সম্পূৰ্ণ কোঠাৰ ভাৰা (100% Room Tariff)
           </p>
         </div>
 
@@ -726,7 +729,7 @@ export const HotelAccounting: React.FC<HotelAccountingProps> = ({
                 <th className="py-2.5 px-3">পৰিশোধ মাধ্যম</th>
                 <th className="py-2.5 px-3">মুঠ ভাৰা (Total)</th>
                 <th className="py-2.5 px-3 text-teal-800">৫% প্লেটফৰ্ম মাচুল</th>
-                <th className="py-2.5 px-3 text-indigo-900">৯৫% হোটেল প্ৰাপ্য</th>
+                <th className="py-2.5 px-3 text-indigo-900">১০০% হোটেল প্ৰাপ্য (Tariff)</th>
                 <th className="py-2.5 px-3">জমা ধন (Paid)</th>
                 <th className="py-2.5 px-3">বাকী (Due)</th>
                 <th className="py-2.5 px-3 text-right">ব্যৱস্থা</th>
@@ -742,7 +745,7 @@ export const HotelAccounting: React.FC<HotelAccountingProps> = ({
               ) : (
                 filteredBookings.map((b) => {
                   const due = Math.max(0, b.totalAmount - b.advancePaid);
-                  const commission = b.platformCommission || (b.channel === 'online' ? Math.round(b.totalAmount * 0.05) : 0);
+                  const commission = b.platformCommission || (b.channel === 'online' ? Math.round((b.hotelPayoutAmount || b.totalAmount) * 0.05) : 0);
                   const hotelPayout = b.hotelPayoutAmount || (b.totalAmount - commission);
 
                   return (

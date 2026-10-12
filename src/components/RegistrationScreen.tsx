@@ -813,7 +813,7 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="text-[11px] text-slate-500 text-center sm:text-left">
-                🔒 ৫% প্লেটফৰ্ম কমিছন আৰু ৯৫% হোটেল পেমেন্ট সুৰক্ষা সমৰ্থিত।
+                🔒 কোঠাৰ ১০০% ভাৰা হোটেল মালিকলৈ আৰু টেৰিফৰ ওপৰত ৫% প্লেটফৰ্ম সুৰক্ষা সমৰ্থিত।
                 {onOpenLogin && (
                   <div className="mt-1">
                     ইতিমধ্যে একাউণ্ট আছে?{' '}

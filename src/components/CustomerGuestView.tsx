@@ -172,8 +172,9 @@ export const CustomerGuestView: React.FC<CustomerGuestViewProps> = ({
 
     setIsSubmittingBooking(true);
 
-    const totalAmount = selectedRoomForBooking.basePrice * nights;
-    const split = calculatePlatformCommission(totalAmount, 'online');
+    const roomTariff = selectedRoomForBooking.basePrice * nights;
+    const split = calculatePlatformCommission(roomTariff, 'online');
+    const totalAmount = split.totalWithCommission;
 
     const newBooking: Booking = {
       id: `bk-${Date.now().toString().slice(-6)}`,
@@ -521,7 +522,7 @@ export const CustomerGuestView: React.FC<CustomerGuestViewProps> = ({
                         <span>স্বচ্ছ বিল বিভাজন:</span>
                         <div className="space-x-2">
                           <span className="text-teal-800 font-bold">৫% প্লেটফৰ্ম মাচুল: ₹{split.platformCommission}</span>
-                          <span className="text-slate-900 font-extrabold">৯৫% হোটেল প্ৰাপ্য: ₹{split.hotelPayoutAmount}</span>
+                          <span className="text-slate-900 font-extrabold">১০০% হোটেল প্ৰাপ্য: ₹{split.hotelPayoutAmount}</span>
                         </div>
                       </div>
 
@@ -880,8 +881,8 @@ export const CustomerGuestView: React.FC<CustomerGuestViewProps> = ({
               
               {/* Transparent Tariff & 5% Platform Fee Breakdown Box */}
               {(() => {
-                const totalStay = selectedRoomForBooking.basePrice * nights;
-                const split = calculatePlatformCommission(totalStay, 'online');
+                const roomTariff = selectedRoomForBooking.basePrice * nights;
+                const split = calculatePlatformCommission(roomTariff, 'online');
                 return (
                   <div className="bg-gradient-to-br from-teal-50 to-slate-50 p-3 rounded-2xl border border-teal-200 space-y-1.5">
                     <div className="flex justify-between text-slate-600 font-semibold">
@@ -890,25 +891,29 @@ export const CustomerGuestView: React.FC<CustomerGuestViewProps> = ({
                     </div>
 
                     <div className="flex justify-between text-slate-700 font-bold">
-                      <span>মুঠ কোঠাৰ ভাৰা (Base Tariff):</span>
-                      <span className="font-extrabold text-slate-900">₹{totalStay.toLocaleString('en-IN')}</span>
+                      <span>মুঠ কোঠাৰ ভাৰা (Room Tariff):</span>
+                      <span className="font-extrabold text-slate-900">₹{roomTariff.toLocaleString('en-IN')}</span>
                     </div>
 
-                    {/* 5% Platform Fee & 95% Hotel Split Breakdown */}
+                    {/* 5% Platform Fee & 100% Hotel Split Breakdown */}
                     <div className="pt-2 border-t border-teal-200/80 space-y-1 text-[11px]">
-                      <div className="flex justify-between text-teal-800 font-bold">
-                        <span>• অৰ্ডাৰফিক্স ৫% প্লেটফৰ্ম সেৱা মাচুল (5% Service Fee):</span>
-                        <span className="font-mono">₹{split.platformCommission.toLocaleString('en-IN')}</span>
-                      </div>
-                      <div className="flex justify-between text-slate-600">
-                        <span>• হোটেল মালিকৰ পোনপটীয়া প্ৰাপ্য (95% Hotel Payout):</span>
+                      <div className="flex justify-between text-emerald-800 font-bold">
+                        <span>• হোটেল মালিকৰ প্ৰাপ্য (100% Room Tariff to Hotel):</span>
                         <span className="font-mono font-bold text-slate-900">₹{split.hotelPayoutAmount.toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="flex justify-between text-teal-800 font-bold">
+                        <span>• অৰ্ডাৰফিক্স ৫% প্লেটফৰ্ম সেৱা মাচুল (5% Platform Fee on Tariff):</span>
+                        <span className="font-mono font-bold text-teal-700">+₹{split.platformCommission.toLocaleString('en-IN')}</span>
                       </div>
                     </div>
 
                     <div className="pt-2 border-t border-teal-200/80 flex items-center justify-between text-sm font-black text-slate-950">
-                      <span>এতিয়া পৰিশোধ কৰিবলগীয়া (Total Payable):</span>
-                      <span className="text-lg text-emerald-700">₹{totalStay.toLocaleString('en-IN')}</span>
+                      <span>মুঠ পৰিশোধ কৰিবলগীয়া (Total Payable by Guest):</span>
+                      <span className="text-lg text-emerald-700">₹{split.totalWithCommission.toLocaleString('en-IN')}</span>
+                    </div>
+
+                    <div className="text-[10px] text-teal-800 bg-teal-100/60 p-2 rounded-lg leading-tight font-medium">
+                      ✓ হোটেলৰ সম্পূৰ্ণ ১০০% ৰূম টেৰিফ (₹{split.hotelPayoutAmount.toLocaleString('en-IN')}) হোটেল মালিকে পাব আৰু টেৰিফৰ ওপৰত ৫% কমিছন (₹{split.platformCommission.toLocaleString('en-IN')}) প্লেটফৰ্ম মালিকে পাব।
                     </div>
                   </div>
                 );
@@ -973,7 +978,7 @@ export const CustomerGuestView: React.FC<CustomerGuestViewProps> = ({
 
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[10px] text-slate-500 space-y-0.5">
                 <p>• চেক-ইনৰ সময়ত চৰকাৰী আধাৰ বা ভোটাৰ কাৰ্ড দাখিল কৰিব লাগিব (Assam Police C-Form নিয়ম)।</p>
-                <p>• ৫% প্লেটফৰ্ম মাচুল সুৰক্ষিতভাৱে কৰ্তন হৈ ৯৫% ধন হোটেলৰ পঞ্জীকৃত একাউণ্টলৈ যাব।</p>
+                <p>• কোঠাৰ ১০০% সম্পূৰ্ণ ভাৰা হোটেল মালিকৰ একাউণ্টলৈ যাব আৰু ৰূম টেৰিফৰ ওপৰত ৫% প্লেটফৰ্ম মাচুল সংগ্ৰহ কৰা হয়।</p>
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2">
