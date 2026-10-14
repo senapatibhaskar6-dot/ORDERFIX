@@ -18,8 +18,11 @@ import {
   Check,
   LogIn,
   LogOut,
-  User as UserIcon
+  User as UserIcon,
+  ShieldAlert,
+  Globe
 } from 'lucide-react';
+import { LanguageCode, getTranslations } from '../utils/translations';
 
 interface NavbarProps {
   hotel: HotelProfile;
@@ -42,6 +45,9 @@ interface NavbarProps {
   authUser?: User | null;
   onOpenAuth?: () => void;
   onLogout?: () => void;
+  onOpenAdmin?: () => void;
+  language?: LanguageCode;
+  onLanguageChange?: (lang: LanguageCode) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -64,8 +70,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenPoliceVerification,
   authUser,
   onOpenAuth,
-  onLogout
+  onLogout,
+  onOpenAdmin,
+  language = 'en',
+  onLanguageChange
 }) => {
+  const t = getTranslations(language);
   const today = new Date().toISOString().split('T')[0];
   const isToday = selectedDate === today;
   const [isHotelDropdownOpen, setIsHotelDropdownOpen] = useState(false);
@@ -199,7 +209,39 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Right Action Cluster */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-            
+
+            {/* Language Selector Dropdown */}
+            {onLanguageChange && (
+              <div className="flex items-center bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl px-1.5 sm:px-2 py-0.5 text-xs text-slate-700 shrink-0">
+                <Globe className="w-3 h-3 text-teal-600 mr-1 shrink-0" />
+                <select
+                  value={language}
+                  onChange={(e) => onLanguageChange(e.target.value as LanguageCode)}
+                  className="bg-transparent border-0 text-[11px] font-bold text-slate-800 focus:outline-hidden cursor-pointer"
+                  title="Change Language (English / অসমীয়া / বাংলা / हिन्दी)"
+                >
+                  <option value="en">English</option>
+                  <option value="as">অসমীয়া</option>
+                  <option value="bn">বাংলা</option>
+                  <option value="hi">हिन्दी</option>
+                </select>
+              </div>
+            )}
+
+            {/* Platform Master Admin Panel Switch */}
+            {onOpenAdmin && (
+              <button
+                type="button"
+                onClick={onOpenAdmin}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-xl text-[11px] sm:text-xs font-black text-slate-950 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 border border-amber-500/50 shadow-xs transition-all cursor-pointer shrink-0 active:scale-95"
+                title="Open Platform Master Admin Panel (পাসৱৰ্ড সুৰক্ষিত এডমিন পেনেল)"
+              >
+                <ShieldAlert className="w-3.5 h-3.5 text-slate-950 shrink-0" />
+                <span className="hidden xs:inline">{t.adminPanel}</span>
+                <span className="xs:hidden">Admin</span>
+              </button>
+            )}
+
             {/* Screen Size / Compact Toggle */}
             <button
               onClick={onToggleCompactMode}
@@ -213,12 +255,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               {isCompactMode ? (
                 <>
                   <Maximize2 className="w-3 h-3 text-amber-700" />
-                  <span className="hidden xs:inline">সাধাৰণ</span>
+                  <span className="hidden xs:inline">{t.normalMode}</span>
                 </>
               ) : (
                 <>
                   <Minimize2 className="w-3 h-3 text-slate-600" />
-                  <span className="hidden xs:inline">সৰু স্ক্ৰীণ</span>
+                  <span className="hidden xs:inline">{t.compactMode}</span>
                   <span className="xs:hidden">সৰু</span>
                 </>
               )}
@@ -231,7 +273,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="Add New Room or Manage Rooms (কোঠা যোগ কৰক)"
             >
               <BedDouble className="w-3.5 h-3.5 text-teal-600 shrink-0" />
-              <span className="hidden sm:inline">Rooms</span>
+              <span className="hidden sm:inline">{t.rooms}</span>
               <span className="sm:hidden">+ৰূম</span>
             </button>
 
@@ -242,7 +284,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="Add New Booking (কোঠা বুক কৰক)"
             >
               <PlusCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#00E5A3] shrink-0" />
-              <span>+বুক</span>
+              <span>{t.addBooking}</span>
             </button>
 
             {/* Accounting / Ledger Button */}
@@ -278,7 +320,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="হোটেলৰ গ্ৰাহক পৰ্টেল (Customer Guest Portal)"
             >
               <Smartphone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span className="hidden xs:inline">গ্ৰাহক পৰ্টেল</span>
+              <span className="hidden xs:inline">{t.guestPortal}</span>
               <span className="xs:hidden">গ্ৰাহক</span>
             </button>
 
@@ -318,7 +360,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 title="প্ৰৱেশ / লগইন কৰক (Sign In)"
               >
                 <LogIn className="w-3.5 h-3.5 text-teal-700 shrink-0" />
-                <span>লগইন</span>
+                <span>{t.login}</span>
               </button>
             ) : null}
 

@@ -11,8 +11,65 @@ export const STORAGE_KEYS = {
   EXPENSES: 'orderfix_expenses',
   VERIFICATIONS: 'orderfix_police_verifications',
   IS_REGISTERED: 'orderfix_is_registered',
-  AUTH_USER: 'orderfix_auth_user'
+  AUTH_USER: 'orderfix_auth_user',
+  ADMIN_PASSWORD: 'orderfix_admin_password',
+  ADMIN_SESSION: 'orderfix_admin_authenticated',
+  LANGUAGE: 'orderfix_language'
 };
+
+export const DEFAULT_ADMIN_PASSWORD = 'Orderfix@Admin2026';
+export const MASTER_RECOVERY_KEY = 'ORDERFIX-MASTER-RECOVER-2026';
+
+export function loadAdminPassword(): string {
+  try {
+    const pwd = localStorage.getItem(STORAGE_KEYS.ADMIN_PASSWORD);
+    if (pwd) return pwd;
+  } catch (e) {
+    console.error('Failed to load admin password', e);
+  }
+  return DEFAULT_ADMIN_PASSWORD;
+}
+
+export function saveAdminPassword(password: string): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.ADMIN_PASSWORD, password);
+  } catch (e) {
+    console.error('Failed to save admin password', e);
+  }
+}
+
+export function verifyAdminPassword(password: string): boolean {
+  const current = loadAdminPassword();
+  return password.trim() === current.trim();
+}
+
+export function resetAdminPasswordWithKey(recoveryKey: string, newPassword: string): boolean {
+  if (recoveryKey.trim() === MASTER_RECOVERY_KEY) {
+    saveAdminPassword(newPassword);
+    return true;
+  }
+  return false;
+}
+
+export function loadLanguage(): 'en' | 'as' | 'bn' | 'hi' {
+  try {
+    const lang = localStorage.getItem(STORAGE_KEYS.LANGUAGE);
+    if (lang === 'en' || lang === 'as' || lang === 'bn' || lang === 'hi') {
+      return lang;
+    }
+  } catch (e) {
+    console.error('Failed to load language', e);
+  }
+  return 'en'; // Default English as requested by user
+}
+
+export function saveLanguage(lang: 'en' | 'as' | 'bn' | 'hi'): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.LANGUAGE, lang);
+  } catch (e) {
+    console.error('Failed to save language', e);
+  }
+}
 
 export function loadAuthUser(): import('../types').User | null {
   try {

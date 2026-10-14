@@ -86,6 +86,7 @@ export interface HotelProfile {
   id: string;
   name: string;
   tagline: string;
+  propertyType?: string;
   description?: string;
   ownerName: string;
   phone: string;

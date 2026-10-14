@@ -50,6 +50,10 @@ import { HotelAccounting } from './components/HotelAccounting';
 import { PoliceVerificationView } from './components/PoliceVerificationView';
 import { RegistrationScreen } from './components/RegistrationScreen';
 import { AuthModal } from './components/AuthModal';
+import { PlatformAdminPanel } from './components/PlatformAdminPanel';
+import { AdminAuthModal } from './components/AdminAuthModal';
+import { LanguageCode } from './utils/translations';
+import { loadLanguage, saveLanguage } from './utils/storage';
 import {
   LayoutGrid,
   List,
@@ -144,6 +148,43 @@ export default function App() {
     }
     return false;
   });
+
+  // Language Preference (Defaults to English as requested: "ARU DESBORD R ENGLISH TTHKIBO JODI KUNBAI LANGUAGE NIJOR BISORA BHAKHALOI CHANGE HOBO")
+  const [language, setLanguage] = useState<LanguageCode>(() => loadLanguage());
+  const handleLanguageChange = (newLang: LanguageCode) => {
+    setLanguage(newLang);
+    saveLanguage(newLang);
+    showToast(newLang === 'en' ? 'Language switched to English' : newLang === 'as' ? 'ভাষা অসমীয়ালৈ সলনি কৰা হ’ল' : 'Language updated', 'info');
+  };
+
+  // Platform Master Admin Panel States
+  const [isAdminActive, setIsAdminActive] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const search = window.location.search;
+      return search.includes('view=admin') || search.includes('admin=1');
+    }
+    return false;
+  });
+  const [isAdminAuthModalOpen, setIsAdminAuthModalOpen] = useState(false);
+
+  const handleOpenAdminPanel = () => {
+    try {
+      const isAuth = localStorage.getItem('orderfix_admin_authenticated') === 'true';
+      if (isAuth) {
+        setIsAdminActive(true);
+      } else {
+        setIsAdminAuthModalOpen(true);
+      }
+    } catch {
+      setIsAdminAuthModalOpen(true);
+    }
+  };
+
+  const handleAdminAuthSuccess = () => {
+    setIsAdminAuthModalOpen(false);
+    setIsAdminActive(true);
+    showToast('মাষ্টাৰ এডমিন পেনেল খোল খালে (Master Admin Access Granted)', 'success');
+  };
 
   // Modal States
   const [isAddBookingOpen, setIsAddBookingOpen] = useState(false);
@@ -339,6 +380,36 @@ export default function App() {
   const activeRooms = rooms.filter((r) => !r.hotelId || r.hotelId === hotel.id);
   const activeBookings = bookings.filter((b) => !b.hotelId || b.hotelId === hotel.id);
 
+  // 0. PLATFORM MASTER ADMIN DASHBOARD VIEW ("extra admin panel ATA BONAI DIYOK")
+  if (isAdminActive) {
+    return (
+      <>
+        <PlatformAdminPanel
+          hotels={hotels}
+          bookings={bookings}
+          rooms={rooms}
+          language={language}
+          onLanguageChange={handleLanguageChange}
+          onSelectHotel={(id) => {
+            handleSelectHotel(id);
+            setIsAdminActive(false);
+          }}
+          onCloseAdmin={() => setIsAdminActive(false)}
+          onOpenNewHotelRegistration={() => {
+            setIsAdminActive(false);
+            setIsRegisteringNewHotel(true);
+          }}
+        />
+        <AdminAuthModal
+          isOpen={isAdminAuthModalOpen}
+          onClose={() => setIsAdminAuthModalOpen(false)}
+          onSuccess={handleAdminAuthSuccess}
+          language={language}
+        />
+      </>
+    );
+  }
+
   // 1. FIRST-TIME REGISTRATION OR ONBOARDING NEW PROPERTY
   if (!isRegistered || isRegisteringNewHotel) {
     return (
@@ -384,6 +455,12 @@ export default function App() {
             setIsRegisteringNewHotel(true);
           }}
           initialRole={authInitialRole}
+        />
+        <AdminAuthModal
+          isOpen={isAdminAuthModalOpen}
+          onClose={() => setIsAdminAuthModalOpen(false)}
+          onSuccess={handleAdminAuthSuccess}
+          language={language}
         />
       </>
     );
@@ -444,6 +521,9 @@ export default function App() {
         authUser={authUser}
         onOpenAuth={() => handleOpenAuth('owner')}
         onLogout={handleLogout}
+        onOpenAdmin={handleOpenAdminPanel}
+        language={language}
+        onLanguageChange={handleLanguageChange}
       />
 
       {/* Mobile Sticky Quick Action Bar */}
@@ -759,6 +839,14 @@ export default function App() {
           setIsRegisteringNewHotel(true);
         }}
         initialRole={authInitialRole}
+      />
+
+      {/* Platform Master Admin Authentication Modal */}
+      <AdminAuthModal
+        isOpen={isAdminAuthModalOpen}
+        onClose={() => setIsAdminAuthModalOpen(false)}
+        onSuccess={handleAdminAuthSuccess}
+        language={language}
       />
 
     </div>
