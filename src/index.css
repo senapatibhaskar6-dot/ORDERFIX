@@ -31,13 +31,22 @@
     visibility: hidden;
   }
   #printable-voucher, #printable-voucher *,
-  #printable-police-report, #printable-police-report * {
+  #printable-police-report, #printable-police-report *,
+  #printable-invoice, #printable-invoice * {
     visibility: visible;
   }
-  #printable-voucher, #printable-police-report {
+  #printable-voucher, #printable-police-report, #printable-invoice {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
+    margin: 0;
+    padding: 0;
+    background: white !important;
+    color: black !important;
+  }
+  @page {
+    margin: 10mm;
+    size: auto;
   }
 }

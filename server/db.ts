@@ -249,6 +249,42 @@ export async function initDatabase() {
       );
     `);
 
+    // 11. Invoices & Billing Management Table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS invoices (
+        id VARCHAR(50) PRIMARY KEY,
+        invoice_number VARCHAR(100) NOT NULL UNIQUE,
+        booking_id VARCHAR(50),
+        hotel_id VARCHAR(50) NOT NULL,
+        guest_name VARCHAR(255) NOT NULL,
+        guest_phone VARCHAR(50) NOT NULL,
+        guest_email VARCHAR(255),
+        room_number VARCHAR(50) NOT NULL,
+        room_type VARCHAR(100),
+        check_in_date VARCHAR(20) NOT NULL,
+        check_out_date VARCHAR(20) NOT NULL,
+        nights INT DEFAULT 1,
+        room_rate NUMERIC NOT NULL,
+        room_total NUMERIC NOT NULL,
+        extra_charges JSONB DEFAULT '[]'::jsonb,
+        extra_charges_total NUMERIC DEFAULT 0,
+        discount_amount NUMERIC DEFAULT 0,
+        tax_rate NUMERIC DEFAULT 12,
+        cgst_amount NUMERIC DEFAULT 0,
+        sgst_amount NUMERIC DEFAULT 0,
+        tax_total NUMERIC DEFAULT 0,
+        subtotal NUMERIC NOT NULL,
+        grand_total NUMERIC NOT NULL,
+        advance_paid NUMERIC DEFAULT 0,
+        balance_due NUMERIC DEFAULT 0,
+        payment_method VARCHAR(50) DEFAULT 'cash',
+        payment_status VARCHAR(50) DEFAULT 'paid',
+        notes TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+
     await client.query('COMMIT');
     console.log('✅ All Neon PostgreSQL database tables verified & ready!');
   } catch (err) {

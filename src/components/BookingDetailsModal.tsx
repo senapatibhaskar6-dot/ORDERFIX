@@ -14,7 +14,8 @@ import {
   LogOut,
   CreditCard,
   Building,
-  Edit3
+  Edit3,
+  Receipt
 } from 'lucide-react';
 
 interface BookingDetailsModalProps {
@@ -27,6 +28,7 @@ interface BookingDetailsModalProps {
   onDeleteBooking: (bookingId: string) => void;
   onOpenWhatsApp: (booking: Booking) => void;
   onPrintSlip: (booking: Booking) => void;
+  onOpenInvoice?: (booking: Booking) => void;
 }
 
 export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
@@ -38,7 +40,8 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
   onUpdateBooking,
   onDeleteBooking,
   onOpenWhatsApp,
-  onPrintSlip
+  onPrintSlip,
+  onOpenInvoice
 }) => {
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [editedNotes, setEditedNotes] = useState('');
@@ -377,44 +380,60 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
           </div>
 
           {/* Primary Action Buttons */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-3 border-t border-slate-200">
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                onOpenWhatsApp(booking);
-              }}
-              className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs shadow-xs cursor-pointer"
-            >
-              <MessageCircle className="w-4 h-4" />
-              <span>WhatsApp Guest</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                onPrintSlip(booking);
-              }}
-              className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs shadow-xs cursor-pointer"
-            >
-              <Printer className="w-4 h-4" />
-              <span>Print Slip</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                if (confirm('Cancel this booking and free the room?')) {
-                  onDeleteBooking(booking.id);
+          <div className="space-y-2 pt-3 border-t border-slate-200">
+            {onOpenInvoice && (
+              <button
+                type="button"
+                onClick={() => {
                   onClose();
-                }
-              }}
-              className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 cursor-pointer"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span>Cancel Booking</span>
-            </button>
+                  onOpenInvoice(booking);
+                }}
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-slate-950 font-black text-xs shadow-md cursor-pointer active:scale-95 transition-all"
+              >
+                <Receipt className="w-4 h-4" />
+                <span>Generate Official Tax Invoice (চালান প্ৰস্তুত কৰক 🧾)</span>
+              </button>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenWhatsApp(booking);
+                }}
+                className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs shadow-xs cursor-pointer"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>WhatsApp Guest</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onPrintSlip(booking);
+                }}
+                className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs shadow-xs cursor-pointer"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print Slip</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm('Cancel this booking and free the room?')) {
+                    onDeleteBooking(booking.id);
+                    onClose();
+                  }
+                }}
+                className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Cancel Booking</span>
+              </button>
+            </div>
           </div>
 
         </div>

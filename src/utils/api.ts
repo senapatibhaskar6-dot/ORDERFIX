@@ -1,4 +1,4 @@
-import { Booking, Room, HotelProfile, GuestVerificationData, Expense } from '../types';
+import { Booking, Room, HotelProfile, GuestVerificationData, Expense, Invoice } from '../types';
 
 export async function checkServerSetupStatus(): Promise<{
   isRegistered: boolean;
@@ -140,5 +140,41 @@ export async function syncHotelToDB(hotel: HotelProfile): Promise<void> {
     });
   } catch (err) {
     console.warn('Failed to sync hotel profile to DB:', err);
+  }
+}
+
+export async function syncInvoiceToDB(invoice: Invoice): Promise<void> {
+  try {
+    await fetch('/api/invoices', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(invoice)
+    });
+  } catch (err) {
+    console.warn('Failed to sync invoice to DB:', err);
+  }
+}
+
+export async function deleteInvoiceFromDB(id: string): Promise<void> {
+  try {
+    await fetch(`/api/invoices/${id}`, {
+      method: 'DELETE'
+    });
+  } catch (err) {
+    console.warn('Failed to delete invoice from DB:', err);
+  }
+}
+
+export async function sendInvoiceEmailAPI(invoice: Invoice, recipientEmail: string, hotelName: string): Promise<boolean> {
+  try {
+    const res = await fetch('/api/invoices/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ invoice, recipientEmail, hotelName })
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn('Failed to call /api/invoices/send-email:', err);
+    return false;
   }
 }

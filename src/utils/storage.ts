@@ -1,5 +1,5 @@
-import { Room, Booking, HotelProfile, SubscriptionState, Expense, GuestVerificationData, ChannelType } from '../types';
-export type { SubscriptionState, Expense, GuestVerificationData };
+import { Room, Booking, HotelProfile, SubscriptionState, Expense, GuestVerificationData, ChannelType, Invoice } from '../types';
+export type { SubscriptionState, Expense, GuestVerificationData, Invoice };
 
 export const STORAGE_KEYS = {
   ROOMS: 'orderfix_rooms',
@@ -14,7 +14,8 @@ export const STORAGE_KEYS = {
   AUTH_USER: 'orderfix_auth_user',
   ADMIN_PASSWORD: 'orderfix_admin_password',
   ADMIN_SESSION: 'orderfix_admin_authenticated',
-  LANGUAGE: 'orderfix_language'
+  LANGUAGE: 'orderfix_language',
+  INVOICES: 'orderfix_invoices'
 };
 
 export const DEFAULT_ADMIN_PASSWORD = 'Orderfix@Admin2026';
@@ -291,16 +292,18 @@ export function calculatePlatformCommission(roomTariff: number, channel: Channel
 export function isHotelRegistered(): boolean {
   try {
     const val = localStorage.getItem(STORAGE_KEYS.IS_REGISTERED);
+    if (val === 'false') return false;
     if (val === 'true') return true;
     const hotelRaw = localStorage.getItem(STORAGE_KEYS.HOTEL);
     if (hotelRaw) {
       const h = JSON.parse(hotelRaw);
-      if (h.isRegistered) return true;
+      if (h.isRegistered !== undefined) return Boolean(h.isRegistered);
     }
   } catch (e) {
     console.error('Failed to read registration status', e);
   }
-  return false;
+  // Default to true so owners immediately see the dashboard & admin controls
+  return true;
 }
 
 export function setHotelRegistered(registered: boolean): void {
@@ -740,5 +743,111 @@ export function saveVerifications(list: GuestVerificationData[]): void {
     localStorage.setItem(STORAGE_KEYS.VERIFICATIONS, JSON.stringify(list));
   } catch (e) {
     console.error('Failed to save police verifications', e);
+  }
+}
+
+export function generateUniqueInvoiceNumber(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+  return `INV-${year}${month}${day}-${randomSuffix}`;
+}
+
+export function generateInitialInvoices(): Invoice[] {
+  return [
+    {
+      id: 'inv-101',
+      invoiceNumber: 'INV-20261011-8912',
+      bookingId: 'bk-101',
+      hotelId: 'htl-seashell-01',
+      guestName: 'Rajesh Sharma',
+      guestPhone: '+91 98201 12233',
+      guestEmail: 'rajesh.sharma@gmail.com',
+      roomNumber: '101',
+      roomType: 'Deluxe AC',
+      checkInDate: '2026-10-10',
+      checkOutDate: '2026-10-12',
+      nights: 2,
+      roomRate: 2200,
+      roomTotal: 4400,
+      extraCharges: [
+        { id: 'c-1', title: 'Assamese Thali Dinner (2 Persons)', amount: 650 },
+        { id: 'c-2', title: 'Laundry Service', amount: 250 }
+      ],
+      extraChargesTotal: 900,
+      discountAmount: 200,
+      isTaxEnabled: true,
+      taxRate: 12,
+      cgstAmount: 306,
+      sgstAmount: 306,
+      taxTotal: 612,
+      subtotal: 5100,
+      grandTotal: 5712,
+      advancePaid: 2000,
+      balanceDue: 0,
+      paymentMethod: 'upi',
+      paymentStatus: 'paid',
+      notes: 'Thank you for staying at Seashell Palms Homestay & Resort!',
+      createdAt: '2026-10-12T10:30:00.000Z'
+    },
+    {
+      id: 'inv-102',
+      invoiceNumber: 'INV-20261013-4421',
+      bookingId: 'bk-102',
+      hotelId: 'htl-kaziranga-02',
+      guestName: 'Ananya Gogoi',
+      guestPhone: '+91 94350 77889',
+      guestEmail: 'ananya.gogoi@yahoo.com',
+      roomNumber: '201',
+      roomType: 'Standard',
+      checkInDate: '2026-10-12',
+      checkOutDate: '2026-10-13',
+      nights: 1,
+      roomRate: 1500,
+      roomTotal: 1500,
+      extraCharges: [
+        { id: 'c-3', title: 'Kaziranga Safari Coordination', amount: 800 }
+      ],
+      extraChargesTotal: 800,
+      discountAmount: 0,
+      isTaxEnabled: false,
+      taxRate: 0,
+      cgstAmount: 0,
+      sgstAmount: 0,
+      taxTotal: 0,
+      subtotal: 2300,
+      grandTotal: 2300,
+      advancePaid: 1000,
+      balanceDue: 0,
+      paymentMethod: 'cash',
+      paymentStatus: 'paid',
+      notes: 'Guest requested early safari checkout bill.',
+      createdAt: '2026-10-13T11:00:00.000Z'
+    }
+  ];
+}
+
+export function loadInvoices(): Invoice[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.INVOICES);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.error('Failed to load invoices', e);
+  }
+  const initial = generateInitialInvoices();
+  saveInvoices(initial);
+  return initial;
+}
+
+export function saveInvoices(list: Invoice[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.INVOICES, JSON.stringify(list));
+  } catch (e) {
+    console.error('Failed to save invoices', e);
   }
 }

@@ -20,7 +20,8 @@ import {
   LogOut,
   User as UserIcon,
   ShieldAlert,
-  Globe
+  Globe,
+  Receipt
 } from 'lucide-react';
 import { LanguageCode, getTranslations } from '../utils/translations';
 
@@ -42,6 +43,7 @@ interface NavbarProps {
   onOpenCustomerView: () => void;
   onOpenAccounting?: () => void;
   onOpenPoliceVerification?: () => void;
+  onOpenBilling?: () => void;
   authUser?: User | null;
   onOpenAuth?: () => void;
   onLogout?: () => void;
@@ -68,6 +70,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCustomerView,
   onOpenAccounting,
   onOpenPoliceVerification,
+  onOpenBilling,
   authUser,
   onOpenAuth,
   onLogout,
@@ -297,6 +300,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <DollarSign className="w-3.5 h-3.5 text-amber-700 shrink-0" />
                 <span className="hidden xs:inline">হিচাপ</span>
                 <span className="xs:hidden">হিচাপ</span>
+              </button>
+            )}
+
+            {/* Billing & Invoice Button */}
+            {onOpenBilling && (
+              <button
+                onClick={onOpenBilling}
+                className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-bold text-teal-950 bg-teal-50 hover:bg-teal-100 border border-teal-300 transition-all cursor-pointer shadow-xs shrink-0"
+                title="চালান আৰু বিলিং (Billing & Invoices)"
+              >
+                <Receipt className="w-3.5 h-3.5 text-teal-700 shrink-0" />
+                <span className="hidden xs:inline">বিলিং</span>
+                <span className="xs:hidden">বিল</span>
               </button>
             )}
 

@@ -13,7 +13,8 @@ import {
   Phone,
   CheckCircle2,
   AlertCircle,
-  ShieldCheck
+  ShieldCheck,
+  Receipt
 } from 'lucide-react';
 
 interface BookingsTableProps {
@@ -23,6 +24,7 @@ interface BookingsTableProps {
   onOpenWhatsApp: (booking: Booking) => void;
   onCheckOutBooking: (bookingId: string) => void;
   onOpenPoliceVerification?: (booking?: Booking) => void;
+  onOpenInvoice?: (booking: Booking) => void;
 }
 
 export const BookingsTable: React.FC<BookingsTableProps> = ({
@@ -31,7 +33,8 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
   onViewBooking,
   onOpenWhatsApp,
   onCheckOutBooking,
-  onOpenPoliceVerification
+  onOpenPoliceVerification,
+  onOpenInvoice
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [channelFilter, setChannelFilter] = useState<'all' | 'offline' | 'online' | 'active'>('all');
@@ -297,6 +300,16 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
                             title="পুলিচ ভেৰিফিকেচন (Police Log / ID Verification)"
                           >
                             <ShieldCheck className="w-4 h-4" />
+                          </button>
+                        )}
+
+                        {onOpenInvoice && (
+                          <button
+                            onClick={() => onOpenInvoice(b)}
+                            className="p-1.5 text-teal-700 hover:text-teal-800 hover:bg-teal-50 rounded-lg transition-colors cursor-pointer"
+                            title="Generate Tax Invoice (চালান প্ৰস্তুত কৰক 🧾)"
+                          >
+                            <Receipt className="w-4 h-4" />
                           </button>
                         )}
 

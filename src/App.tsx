@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Room, Booking, HotelProfile, SubscriptionState, Expense, GuestVerificationData, User } from './types';
+import { Room, Booking, HotelProfile, SubscriptionState, Expense, GuestVerificationData, User, Invoice } from './types';
 import {
   loadRooms,
   saveRooms,
@@ -52,8 +52,11 @@ import { RegistrationScreen } from './components/RegistrationScreen';
 import { AuthModal } from './components/AuthModal';
 import { PlatformAdminPanel } from './components/PlatformAdminPanel';
 import { AdminAuthModal } from './components/AdminAuthModal';
+import { BillingInvoiceView } from './components/BillingInvoiceView';
+import { InvoiceModal } from './components/InvoiceModal';
 import { LanguageCode } from './utils/translations';
-import { loadLanguage, saveLanguage } from './utils/storage';
+import { loadLanguage, saveLanguage, loadInvoices, saveInvoices } from './utils/storage';
+import { syncInvoiceToDB, deleteInvoiceFromDB } from './utils/api';
 import {
   LayoutGrid,
   List,
@@ -65,7 +68,8 @@ import {
   Smartphone,
   BedDouble,
   Plus,
-  DollarSign
+  DollarSign,
+  Receipt
 } from 'lucide-react';
 
 export default function App() {
@@ -112,11 +116,12 @@ export default function App() {
   const [subscription, setSubscription] = useState<SubscriptionState>(() => loadSubscription());
   const [expenses, setExpenses] = useState<Expense[]>(() => loadExpenses());
   const [verifications, setVerifications] = useState<GuestVerificationData[]>(() => loadVerifications());
+  const [invoices, setInvoices] = useState<Invoice[]>(() => loadInvoices());
   
-  // Navigation & Filtering State: 'grid' | 'table' | 'accounting' | 'police'
+  // Navigation & Filtering State: 'grid' | 'table' | 'accounting' | 'police' | 'billing'
   const [selectedDate, setSelectedDate] = useState<string>(() => getTodayString());
   const [activeMetricFilter, setActiveMetricFilter] = useState<'all' | 'available' | 'offline' | 'online' | 'today_arrivals'>('all');
-  const [activeViewTab, setActiveViewTab] = useState<'grid' | 'table' | 'accounting' | 'police'>('grid');
+  const [activeViewTab, setActiveViewTab] = useState<'grid' | 'table' | 'accounting' | 'police' | 'billing'>('grid');
 
   // Compact Mode State: shrinks cards & padding to fit entire screen on mobile!
   const [isCompactMode, setIsCompactMode] = useState<boolean>(() => {
@@ -241,6 +246,61 @@ export default function App() {
   useEffect(() => {
     saveVerifications(verifications);
   }, [verifications]);
+
+  useEffect(() => {
+    saveInvoices(invoices);
+  }, [invoices]);
+
+  // Invoice Modal & Management State
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [selectedInvoiceForModal, setSelectedInvoiceForModal] = useState<Invoice | null>(null);
+  const [selectedBookingForInvoiceModal, setSelectedBookingForInvoiceModal] = useState<Booking | null>(null);
+
+  const handleOpenInvoiceModal = (inv?: Invoice | null, b?: Booking | null) => {
+    setSelectedInvoiceForModal(inv || null);
+    setSelectedBookingForInvoiceModal(b || null);
+    setIsInvoiceModalOpen(true);
+  };
+
+  const handleSaveInvoice = (newInv: Invoice, markBookingBilled: boolean) => {
+    setInvoices((prev) => {
+      const idx = prev.findIndex((i) => i.id === newInv.id);
+      if (idx >= 0) {
+        const updated = [...prev];
+        updated[idx] = newInv;
+        return updated;
+      }
+      return [newInv, ...prev];
+    });
+
+    syncInvoiceToDB(newInv);
+
+    if (newInv.bookingId) {
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.id === newInv.bookingId
+            ? {
+                ...b,
+                status: markBookingBilled ? 'billed' : b.status,
+                paymentStatus: newInv.paymentStatus,
+                advancePaid: newInv.grandTotal,
+                balanceDue: newInv.balanceDue
+              }
+            : b
+        )
+      );
+    }
+
+    showToast(`চালান #${newInv.invoiceNumber} সংৰক্ষণ হ’ল! (Invoice Saved)`, 'success');
+  };
+
+  const handleDeleteInvoice = (id: string) => {
+    if (confirm('Are you sure you want to delete this invoice record?')) {
+      setInvoices((prev) => prev.filter((i) => i.id !== id));
+      deleteInvoiceFromDB(id);
+      showToast('চালান মচি দিয়া হ’ল (Invoice deleted)', 'warning');
+    }
+  };
 
   // Hotel Multi-Vendor Switcher Handler
   const handleSelectHotel = (hotelId: string) => {
@@ -518,6 +578,7 @@ export default function App() {
         onOpenCustomerView={() => setIsCustomerViewActive(true)}
         onOpenAccounting={() => setActiveViewTab('accounting')}
         onOpenPoliceVerification={() => setActiveViewTab('police')}
+        onOpenBilling={() => setActiveViewTab('billing')}
         authUser={authUser}
         onOpenAuth={() => handleOpenAuth('owner')}
         onLogout={handleLogout}
@@ -553,6 +614,19 @@ export default function App() {
           >
             <DollarSign className="w-3 h-3" />
             <span>হিচাপ</span>
+          </button>
+
+          <button
+            onClick={() => setActiveViewTab('billing')}
+            className={`flex items-center gap-1 px-2 py-1 rounded-lg font-bold text-[11px] transition-colors cursor-pointer ${
+              activeViewTab === 'billing'
+                ? 'bg-teal-400 text-slate-950 font-black'
+                : 'bg-white/15 text-teal-200'
+            }`}
+            title="চালান আৰু বিলিং (Invoices)"
+          >
+            <Receipt className="w-3 h-3" />
+            <span>চালান</span>
           </button>
         </div>
 
@@ -630,6 +704,19 @@ export default function App() {
               <span>হিচাপ & ৫% কমিছন (Accounting 📊)</span>
             </button>
 
+            {/* BILLING & INVOICE MANAGEMENT TAB */}
+            <button
+              onClick={() => setActiveViewTab('billing')}
+              className={`flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer ${
+                activeViewTab === 'billing'
+                  ? 'bg-teal-500 text-slate-950 shadow-md font-black'
+                  : 'text-teal-900 hover:text-teal-950 hover:bg-teal-100/60'
+              }`}
+            >
+              <Receipt className="w-3.5 h-3.5 text-teal-700" />
+              <span>চালান & বিলিং (Billing & Invoices 🧾) {invoices.length > 0 ? `(${invoices.length})` : ''}</span>
+            </button>
+
             {/* POLICE VERIFICATION TAB */}
             <button
               onClick={() => setActiveViewTab('police')}
@@ -667,6 +754,7 @@ export default function App() {
               onViewBooking={handleViewBooking}
               onOpenWhatsApp={(b) => setWhatsAppBooking(b)}
               onCheckOutBooking={handleCheckOutBooking}
+              onOpenInvoice={(b) => handleOpenInvoiceModal(null, b)}
               isCompactMode={isCompactMode}
             />
 
@@ -679,6 +767,7 @@ export default function App() {
                 onOpenWhatsApp={(b) => setWhatsAppBooking(b)}
                 onCheckOutBooking={handleCheckOutBooking}
                 onOpenPoliceVerification={() => setActiveViewTab('police')}
+                onOpenInvoice={(b) => handleOpenInvoiceModal(null, b)}
               />
             </div>
           </div>
@@ -691,6 +780,7 @@ export default function App() {
               onOpenWhatsApp={(b) => setWhatsAppBooking(b)}
               onCheckOutBooking={handleCheckOutBooking}
               onOpenPoliceVerification={() => setActiveViewTab('police')}
+              onOpenInvoice={(b) => handleOpenInvoiceModal(null, b)}
             />
           </div>
         ) : activeViewTab === 'accounting' ? (
@@ -703,6 +793,18 @@ export default function App() {
               onAddExpense={handleAddExpense}
               onDeleteExpense={handleDeleteExpense}
               onOpenWhatsApp={(b) => setWhatsAppBooking(b)}
+            />
+          </div>
+        ) : activeViewTab === 'billing' ? (
+          <div className="mt-2">
+            {/* DEDICATED BILLING & INVOICE MANAGEMENT MODULE */}
+            <BillingInvoiceView
+              invoices={invoices}
+              hotel={hotel}
+              bookings={activeBookings}
+              onOpenInvoiceModal={handleOpenInvoiceModal}
+              onDeleteInvoice={handleDeleteInvoice}
+              language={language}
             />
           </div>
         ) : (
@@ -771,6 +873,7 @@ export default function App() {
           onDeleteBooking={handleDeleteBooking}
           onOpenWhatsApp={(b) => setWhatsAppBooking(b)}
           onPrintSlip={(b) => setPrintSlipBooking(b)}
+          onOpenInvoice={(b) => handleOpenInvoiceModal(null, b)}
         />
       )}
 
@@ -846,6 +949,21 @@ export default function App() {
         isOpen={isAdminAuthModalOpen}
         onClose={() => setIsAdminAuthModalOpen(false)}
         onSuccess={handleAdminAuthSuccess}
+        language={language}
+      />
+
+      {/* Official Tax Invoice Generation Modal */}
+      <InvoiceModal
+        isOpen={isInvoiceModalOpen}
+        onClose={() => {
+          setIsInvoiceModalOpen(false);
+          setSelectedInvoiceForModal(null);
+          setSelectedBookingForInvoiceModal(null);
+        }}
+        booking={selectedBookingForInvoiceModal}
+        existingInvoice={selectedInvoiceForModal}
+        hotel={hotel}
+        onSaveInvoice={handleSaveInvoice}
         language={language}
       />
 

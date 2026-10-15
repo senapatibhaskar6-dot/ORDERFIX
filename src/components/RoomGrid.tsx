@@ -12,7 +12,8 @@ import {
   User,
   CheckCircle2,
   AlertCircle,
-  Phone
+  Phone,
+  Receipt
 } from 'lucide-react';
 
 interface RoomGridProps {
@@ -24,6 +25,7 @@ interface RoomGridProps {
   onViewBooking: (booking: Booking, room: Room) => void;
   onOpenWhatsApp: (booking: Booking) => void;
   onCheckOutBooking: (bookingId: string) => void;
+  onOpenInvoice?: (booking: Booking) => void;
   isCompactMode?: boolean;
 }
 
@@ -36,6 +38,7 @@ export const RoomGrid: React.FC<RoomGridProps> = ({
   onViewBooking,
   onOpenWhatsApp,
   onCheckOutBooking,
+  onOpenInvoice,
   isCompactMode = false
 }) => {
   // Filter rooms based on active filter
@@ -223,6 +226,16 @@ export const RoomGrid: React.FC<RoomGridProps> = ({
                       <Phone className="w-3 h-3" />
                     </a>
 
+                    {onOpenInvoice && (
+                      <button
+                        onClick={() => onOpenInvoice(booking)}
+                        className="p-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 font-bold border border-teal-200 transition-all cursor-pointer flex items-center justify-center shrink-0"
+                        title="Tax Invoice (চালান বনাওক)"
+                      >
+                        <Receipt className="w-3 h-3 text-teal-700" />
+                      </button>
+                    )}
+
                     <button
                       onClick={() => onViewBooking(booking, room)}
                       className="p-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-800 font-bold border border-slate-200 transition-all cursor-pointer flex items-center justify-center shrink-0"
@@ -309,6 +322,16 @@ export const RoomGrid: React.FC<RoomGridProps> = ({
                     >
                       <Phone className="w-3 h-3" />
                     </a>
+
+                    {onOpenInvoice && (
+                      <button
+                        onClick={() => onOpenInvoice(booking)}
+                        className="p-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 font-bold border border-teal-200 transition-all cursor-pointer flex items-center justify-center shrink-0"
+                        title="Tax Invoice (চালান বনাওক)"
+                      >
+                        <Receipt className="w-3 h-3 text-teal-700" />
+                      </button>
+                    )}
 
                     <button
                       onClick={() => onViewBooking(booking, room)}

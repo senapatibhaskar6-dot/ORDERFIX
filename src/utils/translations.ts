@@ -24,6 +24,7 @@ export interface Translations {
   logout: string;
   adminPanel: string;
   adminSwitch: string;
+  billing: string;
   
   // Admin Panel
   adminTitle: string;
@@ -130,6 +131,7 @@ export const translations: Record<LanguageCode, Translations> = {
     logout: 'Sign Out',
     adminPanel: 'Platform Admin',
     adminSwitch: 'Master Admin Panel',
+    billing: 'Billing & Invoices 🧾',
     
     adminTitle: 'Platform Master Admin Dashboard',
     adminSubtitle: 'Central Multi-Vendor Hotel Network, Online Booking Ledger & Monthly Financial Accounts',
@@ -228,6 +230,7 @@ export const translations: Record<LanguageCode, Translations> = {
     logout: 'লগআউট',
     adminPanel: 'এডমিন পেনেল',
     adminSwitch: 'প্লেটফৰ্ম মাষ্টাৰ এডমিন পেনেল',
+    billing: 'চালান আৰু বিলিং 🧾',
     
     adminTitle: 'প্লেটফৰ্ম মাষ্টাৰ এডমিন ডেশ্ববৰ্ড',
     adminSubtitle: 'কেন্দ্ৰীয় মাল্টি-ভেণ্ডৰ হোটেল নেটৱৰ্ক, অনলাইন বুকিং আৰু মাহেকীয়া বিত্তীয় হিচাপ',
@@ -326,6 +329,7 @@ export const translations: Record<LanguageCode, Translations> = {
     logout: 'লগআউট',
     adminPanel: 'অ্যাডমিন প্যানেল',
     adminSwitch: 'মাস্টার অ্যাডমিন প্যানেল',
+    billing: 'বিলিং ও চালান 🧾',
     
     adminTitle: 'প্ল্যাটফর্ম মাস্টার অ্যাডমিন ড্যাশবোর্ড',
     adminSubtitle: 'মাল্টি-ভেন্ডর হোটেল নেটওয়ার্ক, অনলাইন বুকিং ও মাসিক আর্থিক হিসাব',
@@ -424,6 +428,7 @@ export const translations: Record<LanguageCode, Translations> = {
     logout: 'लॉग आउट',
     adminPanel: 'एडमिन पैनल',
     adminSwitch: 'मास्टर एडमिन पैनल',
+    billing: 'बिलिंग और इनवॉइस 🧾',
     
     adminTitle: 'प्लेटफॉर्म मास्टर एडमिन डैशबोर्ड',
     adminSubtitle: 'केंद्रीय मल्टी-वेंडर होटल नेटवर्क, ऑनलाइन बुकिंग और मासिक वित्तीय हिसाब',

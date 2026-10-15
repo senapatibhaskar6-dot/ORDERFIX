@@ -5,12 +5,13 @@ import {
   Plus,
   Smartphone,
   DollarSign,
-  ShieldCheck
+  ShieldCheck,
+  Receipt
 } from 'lucide-react';
 
 interface MobileBottomNavProps {
-  activeTab: 'grid' | 'table' | 'accounting' | 'police';
-  onSelectTab: (tab: 'grid' | 'table' | 'accounting' | 'police') => void;
+  activeTab: 'grid' | 'table' | 'accounting' | 'police' | 'billing';
+  onSelectTab: (tab: 'grid' | 'table' | 'accounting' | 'police' | 'billing') => void;
   onOpenAddBooking: () => void;
   onOpenCustomerView: () => void;
   bookingsCount: number;
@@ -101,6 +102,29 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             )}
           </div>
           <span className="text-[9px] mt-0.5 font-black text-amber-900">হিচাপ</span>
+        </button>
+
+        {/* Billing & Invoices Tab ("চালান / Bills") */}
+        <button
+          onClick={() => onSelectTab('billing')}
+          className={`flex flex-col items-center justify-center py-1 px-1.5 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'billing'
+              ? 'text-teal-800 font-black'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+          title="চালান আৰু বিলিং (Billing & Invoices)"
+        >
+          <div className="relative">
+            <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${
+              activeTab === 'billing' ? 'bg-teal-200 text-teal-950 font-black' : 'bg-teal-100 text-teal-800'
+            }`}>
+              <Receipt className="w-3.5 h-3.5" />
+            </div>
+            {activeTab === 'billing' && (
+              <span className="w-1.5 h-1.5 rounded-full bg-teal-600 absolute -bottom-1 left-1/2 -translate-x-1/2" />
+            )}
+          </div>
+          <span className="text-[9px] mt-0.5 font-black text-teal-900">চালান</span>
         </button>
 
         {/* Guest View Tab */}

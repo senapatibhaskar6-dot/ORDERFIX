@@ -4,7 +4,7 @@ export type OfflineSource = 'walk_in' | 'phone_call' | 'whatsapp' | 'direct_ref'
 export type OnlineSource = 'orderfix_portal' | 'booking_com' | 'makemytrip' | 'agoda' | 'airbnb' | 'goibibo' | 'expedia' | 'other';
 export type BookingSource = OfflineSource | OnlineSource;
 
-export type BookingStatus = 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled';
+export type BookingStatus = 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'billed';
 export type PaymentStatus = 'paid' | 'partial' | 'pending';
 export type PaymentMethod = 'cash' | 'upi' | 'card' | 'online_portal';
 
@@ -227,4 +227,43 @@ export interface AdminPlatformMetrics {
   totalPlatformCommissionCollected: number;
   totalEntryFeesCollected: number;
   totalPlatformEarnings: number;
+}
+
+export interface InvoiceExtraCharge {
+  id: string;
+  title: string;
+  amount: number;
+}
+
+export interface Invoice {
+  id: string;
+  invoiceNumber: string; // e.g. INV-202610-1042
+  bookingId?: string;
+  hotelId: string;
+  guestName: string;
+  guestPhone: string;
+  guestEmail?: string;
+  roomNumber: string;
+  roomType?: string;
+  checkInDate: string;
+  checkOutDate: string;
+  nights: number;
+  roomRate: number;
+  roomTotal: number;
+  extraCharges: InvoiceExtraCharge[]; // Food, Laundry, Room Service, etc.
+  extraChargesTotal: number;
+  discountAmount: number;
+  isTaxEnabled: boolean;
+  taxRate: number; // e.g. 12 (6% CGST + 6% SGST)
+  cgstAmount: number;
+  sgstAmount: number;
+  taxTotal: number;
+  subtotal: number;
+  grandTotal: number;
+  advancePaid: number;
+  balanceDue: number;
+  paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
+  notes?: string;
+  createdAt: string;
 }
