@@ -106,6 +106,104 @@ export interface Translations {
   assamese: string;
   bengali: string;
   hindi: string;
+
+  // Portal & Navigation
+  ownerDashboard: string;
+  hotelDirectory: string;
+  browseRooms: string;
+  findMyBooking: string;
+  searchLocation: string;
+  viewOnMap: string;
+  bookNow: string;
+  registrationTitle: string;
+  registrationSubtitle: string;
+  propertyDetails: string;
+  locationDetails: string;
+  quickFillDemo: string;
+  signIn: string;
+  close: string;
+  proceedPayment: string;
+  entryFee: string;
+  mobileNavRooms: string;
+  mobileNavPolice: string;
+  mobileNavBook: string;
+  mobileNavAccounts: string;
+  mobileNavBilling: string;
+  mobileNavGuest: string;
+
+  // Trial Banner & Badges
+  trialBannerBadge: string;
+  trialBannerTitle: string;
+  trialBannerDesc: string;
+  upgradeBtn: string;
+  oneMonthFreeBadge: string;
+  entryFeeNotice: string;
+
+  // Metrics Cards
+  totalRooms: string;
+  availableRooms: string;
+  offlineBooked: string;
+  onlineBooked: string;
+  todayArrivals: string;
+  occupied: string;
+  busy: string;
+
+  // Room Grid
+  roomStatusGrid: string;
+  greenAvailable: string;
+  redOffline: string;
+  blueOnline: string;
+  quickBook: string;
+  viewBooking: string;
+  checkOut: string;
+  invoice: string;
+  noRoomsMatch: string;
+  trySwitchingTotal: string;
+
+  // Guest Portal
+  guestPortalSubtitle: string;
+  searchPlaceholder: string;
+  allDestinations: string;
+  filterAvailableOnly: string;
+  checkInDateLabel: string;
+  checkOutDateLabel: string;
+  guestsCountLabel: string;
+  nightCount: string;
+  nightsCount: string;
+  perNight: string;
+  verifiedHotel: string;
+  roomsAvailable: string;
+  viewRoomsBtn: string;
+  selectHotelBtn: string;
+  directBookingTitle: string;
+  directBookingSubtitle: string;
+  guestFullName: string;
+  guestMobile: string;
+  guestEmail: string;
+  specialRequests: string;
+  confirmAndBook: string;
+  bookingConfirmedTitle: string;
+  bookingConfirmedSubtitle: string;
+  myBookingTitle: string;
+  myBookingSubtitle: string;
+  enterPhoneNumber: string;
+  lookupBtn: string;
+
+  // Registration & Onboarding
+  hotelNameLabel: string;
+  ownerNameLabel: string;
+  contactPhoneLabel: string;
+  cityLabel: string;
+  areaLabel: string;
+  landmarkLabel: string;
+  fullAddressLabel: string;
+  googleMapsLinkLabel: string;
+  generateMapBtn: string;
+  guestLocationPreview: string;
+  alreadyRegistered: string;
+  logInHere: string;
+  addNewHotelBtn: string;
+  editHotelInfo: string;
 }
 
 export const translations: Record<LanguageCode, Translations> = {
@@ -205,7 +303,104 @@ export const translations: Record<LanguageCode, Translations> = {
     english: 'English',
     assamese: 'অসমীয়া (Assamese)',
     bengali: 'বাংলা (Bengali)',
-    hindi: 'हिन्दी (Hindi)'
+    hindi: 'हिन्दी (Hindi)',
+
+    ownerDashboard: 'Owner Dashboard',
+    hotelDirectory: 'Hotels Directory',
+    browseRooms: 'Browse Rooms',
+    findMyBooking: 'Find My Booking',
+    searchLocation: 'Search City, Destination, or Landmark',
+    viewOnMap: 'View on Google Maps',
+    bookNow: 'Select Room & Book',
+    registrationTitle: 'Hotel & Homestay Registration',
+    registrationSubtitle: 'Multi-Vendor Property Onboarding & Instant Dual-Booking Management',
+    propertyDetails: '1. Property & Owner Details',
+    locationDetails: 'Hotel Location & Landmark Details',
+    quickFillDemo: '⚡ Quick Fill Demo',
+    signIn: 'Sign In',
+    close: 'Close',
+    proceedPayment: 'Proceed to Payment (₹99)',
+    entryFee: 'Entry Fee: ₹99',
+    mobileNavRooms: 'Rooms',
+    mobileNavPolice: 'Police',
+    mobileNavBook: '+Book',
+    mobileNavAccounts: 'Accounts',
+    mobileNavBilling: 'Invoices',
+    mobileNavGuest: 'Guest',
+
+    // Trial Banner & Badges
+    trialBannerBadge: '1st Month Free (30 Days Free Trial)',
+    trialBannerTitle: 'Prevent Online & Offline Double-Bookings — 1st Month 100% Free',
+    trialBannerDesc: 'Full 100% room tariff directly to hotel owners. Only 5% transparent commission on online bookings. 0% commission on offline walk-ins.',
+    upgradeBtn: 'Upgrade to Pro (₹99)',
+    oneMonthFreeBadge: '1st Month Free • 30 Days Trial',
+    entryFeeNotice: '₹99 Registration Fee • 5% Transparent Commission',
+
+    // Metrics Cards
+    totalRooms: 'Total Rooms',
+    availableRooms: 'Available Rooms',
+    offlineBooked: 'Offline Booked',
+    onlineBooked: 'Online Bookings',
+    todayArrivals: 'Today Arrivals',
+    occupied: 'Occupied',
+    busy: 'Busy',
+
+    // Room Grid
+    roomStatusGrid: 'Room Status Grid',
+    greenAvailable: 'Green: Available',
+    redOffline: 'Red: Offline',
+    blueOnline: 'Blue: Online',
+    quickBook: 'Book',
+    viewBooking: 'View',
+    checkOut: 'Check Out',
+    invoice: 'Invoice',
+    noRoomsMatch: 'No rooms match the current filter',
+    trySwitchingTotal: 'Try switching to "Total Rooms".',
+
+    // Guest Portal
+    guestPortalSubtitle: 'Verified Hotels & Homestays with Instant Confirmation',
+    searchPlaceholder: 'Search by city, area, tourist spot or hotel name...',
+    allDestinations: 'All Locations',
+    filterAvailableOnly: 'Available Only',
+    checkInDateLabel: 'Check-in',
+    checkOutDateLabel: 'Check-out',
+    guestsCountLabel: 'Guests',
+    nightCount: 'night',
+    nightsCount: 'nights',
+    perNight: '/ night',
+    verifiedHotel: 'Verified Property',
+    roomsAvailable: 'rooms available',
+    viewRoomsBtn: 'Select Room & Book',
+    selectHotelBtn: 'View Hotel Rooms',
+    directBookingTitle: 'Instant Online Room Reservation',
+    directBookingSubtitle: 'Direct booking with the property • Instant WhatsApp & SMS confirmation',
+    guestFullName: 'Full Name of Guest',
+    guestMobile: 'Mobile / WhatsApp Number',
+    guestEmail: 'Email Address (Optional)',
+    specialRequests: 'Special Requests / Arrival Notes',
+    confirmAndBook: 'Confirm & Complete Booking',
+    bookingConfirmedTitle: 'Booking Confirmed Successfully!',
+    bookingConfirmedSubtitle: 'Your reservation is confirmed. The hotel has been notified.',
+    myBookingTitle: 'Lookup Your Reservation',
+    myBookingSubtitle: 'Enter your phone number to check active bookings',
+    enterPhoneNumber: 'Enter 10-digit mobile number',
+    lookupBtn: 'Find Booking',
+
+    // Registration & Onboarding
+    hotelNameLabel: 'Property / Hotel / Homestay Name',
+    ownerNameLabel: 'Owner / Host Full Name',
+    contactPhoneLabel: 'Contact Phone Number',
+    cityLabel: 'City / Tourist Destination',
+    areaLabel: 'Locality / Area',
+    landmarkLabel: 'Prominent Landmark',
+    fullAddressLabel: 'Full Street Address',
+    googleMapsLinkLabel: 'Google Maps Link (Optional)',
+    generateMapBtn: 'Generate Maps Link',
+    guestLocationPreview: 'Live Guest Location Search Preview',
+    alreadyRegistered: 'Already registered?',
+    logInHere: 'Sign In Here',
+    addNewHotelBtn: '+ Add New Hotel (₹99)',
+    editHotelInfo: 'Edit Hotel Profile'
   },
   
   as: {
@@ -304,7 +499,104 @@ export const translations: Record<LanguageCode, Translations> = {
     english: 'English',
     assamese: 'অসমীয়া (Assamese)',
     bengali: 'বাংলা (Bengali)',
-    hindi: 'हिन्दी (Hindi)'
+    hindi: 'हिन्दी (Hindi)',
+
+    ownerDashboard: 'মালিকৰ ডেশ্ববৰ্ড',
+    hotelDirectory: 'হোটেল তালিকা',
+    browseRooms: 'কোঠা বাছনি',
+    findMyBooking: 'মোৰ বুকিং চাওক',
+    searchLocation: 'চহৰ, স্থান বা লেণ্ডমাৰ্ক বিচাৰক',
+    viewOnMap: 'Google Maps ত চাওক',
+    bookNow: 'কোঠা বাছনি & বুকিং',
+    registrationTitle: 'হোটেল আৰু হোমষ্টে’ পঞ্জীয়ন',
+    registrationSubtitle: 'মাল্টি-ভেণ্ডৰ পঞ্জীয়ন আৰু দ্বৈত বুকিং ব্যৱস্থা',
+    propertyDetails: '১. প্ৰতিষ্ঠান আৰু মালিকৰ তথ্য',
+    locationDetails: 'হোটেলৰ অৱস্থান আৰু ঠিকনা',
+    quickFillDemo: '⚡ নমুনা তথ্য',
+    signIn: 'লগইন',
+    close: 'বাতিল',
+    proceedPayment: 'মাচুল পৰিশোধ আৰু পঞ্জীয়ন (₹৯৯)',
+    entryFee: 'প্ৰৱেশ মাচুল: ₹৯৯',
+    mobileNavRooms: 'ৰূম',
+    mobileNavPolice: 'পুলিচ',
+    mobileNavBook: '+বুক',
+    mobileNavAccounts: 'হিচাপ',
+    mobileNavBilling: 'চালান',
+    mobileNavGuest: 'গ্ৰাহক',
+
+    // Trial Banner & Badges
+    trialBannerBadge: 'প্ৰথম ১ মাহ বিনামূলীয়া (৩০ দিন ফ্ৰী ট্ৰায়াল)',
+    trialBannerTitle: 'অনলাইন আৰু অফলাইন ডাবল-বুকিং ৰোধ কৰক — প্ৰথম মাহ সম্পূৰ্ণ ফ্ৰী',
+    trialBannerDesc: 'হোটেলৰ সম্পূৰ্ণ ১০০% কোঠাৰ ভাৰা হোটেল মালিকৰ হাতলৈ। অনলাইন বুকিঙত মাত্ৰ ৫% মাচুল আৰু অফলাইন ৱাক-ইনত ০% মাচুল।',
+    upgradeBtn: 'আপগ্ৰেড কৰক (₹৯৯)',
+    oneMonthFreeBadge: '১ম মাহ ফ্ৰী • ৩০ দিন ট্ৰায়াল',
+    entryFeeNotice: '₹৯৯ পঞ্জীয়ন মাচুল • ৫% স্বচ্ছ কমিছন',
+
+    // Metrics Cards
+    totalRooms: 'মুঠ কোঠা',
+    availableRooms: 'খালী কোঠা',
+    offlineBooked: 'অফলাইন বুকিং',
+    onlineBooked: 'অনলাইন বুকিং',
+    todayArrivals: 'আজিৰ আগমন',
+    occupied: 'ব্যস্ত',
+    busy: 'বুক্ড',
+
+    // Room Grid
+    roomStatusGrid: 'কোঠা অৱস্থা গ্ৰিড',
+    greenAvailable: 'সেউজীয়া: উপলব্ধ',
+    redOffline: 'ৰঙা: অফলাইন',
+    blueOnline: 'নীলা: অনলাইন',
+    quickBook: 'বুক কৰক',
+    viewBooking: 'চাওক',
+    checkOut: 'চেক আউট',
+    invoice: 'চালান',
+    noRoomsMatch: 'কোনো কোঠা ফিল্টাৰৰ সৈতে মিলা নাই',
+    trySwitchingTotal: 'অনুগ্ৰহ কৰি "মুঠ কোঠা" ফিল্টাৰ চাওক।',
+
+    // Guest Portal
+    guestPortalSubtitle: 'নিশ্চিত হোটেল আৰু হোমষ্টে’ ক্ষিপ্ৰ বুকিং সুবিধা',
+    searchPlaceholder: 'চহৰ, অঞ্চল, ভ্ৰমণস্থলী বা হোটেলৰ নাম বিচাৰক...',
+    allDestinations: 'সকলো স্থান',
+    filterAvailableOnly: 'কেৱল খালী থকা',
+    checkInDateLabel: 'চেক-ইন',
+    checkOutDateLabel: 'চেক-আউট',
+    guestsCountLabel: 'অতিথি',
+    nightCount: 'ৰাতি',
+    nightsCount: 'ৰাতি',
+    perNight: '/ প্ৰতি ৰাতি',
+    verifiedHotel: 'পৰীক্ষিত প্ৰতিষ্ঠান',
+    roomsAvailable: 'কোঠা উপলব্ধ',
+    viewRoomsBtn: 'কোঠা নিৰ্বাচন আৰু বুকিং',
+    selectHotelBtn: 'হোটেলৰ কোঠাসমূহ চাওক',
+    directBookingTitle: 'অনলাইন ক্ষিপ্ৰ কোঠা সংৰক্ষণ',
+    directBookingSubtitle: 'হোটেলৰ সৈতে প্ৰত্যক্ষ বুকিং • তৎক্ষণাৎ নিশ্চিতকৰণ',
+    guestFullName: 'অতিথিৰ সম্পূৰ্ণ নাম',
+    guestMobile: 'ম’বাইল / হোৱাটছএপ নম্বৰ',
+    guestEmail: 'ইমেইল ঠিকনা (ঐচ্ছিক)',
+    specialRequests: 'বিশেষ অনুৰোধ / আগমনৰ সময়',
+    confirmAndBook: 'বুকিং নিশ্চিত কৰক',
+    bookingConfirmedTitle: 'বুকিং সফলতাৰে সম্পন্ন হ’ল!',
+    bookingConfirmedSubtitle: 'আপোনাৰ সংৰক্ষণ নিশ্চিত কৰা হৈছে। হোটেল কৰ্তৃপক্ষক জনোৱা হৈছে।',
+    myBookingTitle: 'আপোনাৰ বুকিং চাওক',
+    myBookingSubtitle: 'আপোনাৰ ম’বাইল নম্বৰ দি সক্ৰিয় বুকিং পৰীক্ষা কৰক',
+    enterPhoneNumber: '১০ সংখ্যাৰ ম’বাইল নম্বৰ দিয়ক',
+    lookupBtn: 'বুকিং বিচাৰক',
+
+    // Registration & Onboarding
+    hotelNameLabel: 'হোটেল বা হোমষ্টে’ৰ নাম',
+    ownerNameLabel: 'মালিকৰ সম্পূৰ্ণ নাম',
+    contactPhoneLabel: 'যোগাযোগৰ ফোন নম্বৰ',
+    cityLabel: 'চহৰ / ভ্ৰমণস্থলী',
+    areaLabel: 'অঞ্চল / অঞ্চলৰ নাম',
+    landmarkLabel: 'মুখ্য লেণ্ডমাৰ্ক',
+    fullAddressLabel: 'সম্পূৰ্ণ পথৰ ঠিকনা',
+    googleMapsLinkLabel: 'গুগল মেপ লিংক (ঐচ্ছিক)',
+    generateMapBtn: 'মেপ লিংক তৈয়াৰ কৰক',
+    guestLocationPreview: 'লাইভ গ্ৰাহক সন্ধান প্ৰিভিউ',
+    alreadyRegistered: 'ইতিমধ্যে পঞ্জীকৃত নেকি?',
+    logInHere: 'ইয়াত লগইন কৰক',
+    addNewHotelBtn: '+ নতুন হোটেল যোগ (₹৯৯)',
+    editHotelInfo: 'হোটেল তথ্য সম্পাদনা'
   },
   
   bn: {
@@ -403,7 +695,31 @@ export const translations: Record<LanguageCode, Translations> = {
     english: 'English',
     assamese: 'অসমীয়া (Assamese)',
     bengali: 'বাংলা (Bengali)',
-    hindi: 'हिन्दी (Hindi)'
+    hindi: 'हिन्दी (Hindi)',
+
+    ownerDashboard: 'মালিকের ড্যাশবোর্ড',
+    hotelDirectory: 'হোটেল তালিকা',
+    browseRooms: 'রুম নির্বাচন',
+    findMyBooking: 'আমার বুকিং দেখুন',
+    searchLocation: 'শহর, এলাকা বা ল্যান্ডমার্ক খুঁজুন',
+    viewOnMap: 'Google Maps-এ দেখুন',
+    bookNow: 'রুম বেছে নিন ও বুক করুন',
+    registrationTitle: 'হোটেল ও হোমস্টে নিবন্ধন',
+    registrationSubtitle: 'মাল্টি-ভেন্ডর অনবোর্ডিং ও ডুয়াল বুকিং সিস্টেম',
+    propertyDetails: '১. প্রতিষ্ঠান ও মালিকের তথ্য',
+    locationDetails: 'অবস্থান ও ঠিকানা',
+    quickFillDemo: '⚡ ডেমো তথ্য',
+    signIn: 'লগইন',
+    close: 'বন্ধ করুন',
+    proceedPayment: 'পেমেন্ট ও নিবন্ধন সম্পন্ন করুন (₹৯৯)',
+    entryFee: 'এন্ট্রি ফি: ₹৯৯',
+    freeTrialMonth: '১ম মাস সম্পূর্ণ ফ্রি (৩০ দিন)',
+    mobileNavRooms: 'রুম',
+    mobileNavPolice: 'পুলিশ',
+    mobileNavBook: '+বুক',
+    mobileNavAccounts: 'হিসেব',
+    mobileNavBilling: 'বিলিং',
+    mobileNavGuest: 'গ্রাহক'
   },
   
   hi: {
@@ -502,7 +818,31 @@ export const translations: Record<LanguageCode, Translations> = {
     english: 'English',
     assamese: 'অসমীয়া (Assamese)',
     bengali: 'বাংলা (Bengali)',
-    hindi: 'हिन्दी (Hindi)'
+    hindi: 'हिन्दी (Hindi)',
+
+    ownerDashboard: 'मालिक डैशबोर्ड',
+    hotelDirectory: 'होटल सूची',
+    browseRooms: 'कमरे चुनें',
+    findMyBooking: 'मेरी बुकिंग खोजें',
+    searchLocation: 'शहर, स्थान या लैंडमार्क खोजें',
+    viewOnMap: 'गूगल मैप्स पर देखें',
+    bookNow: 'कमरा चुनें और बुक करें',
+    registrationTitle: 'होटल और होमस्टे पंजीकरण',
+    registrationSubtitle: 'मल्टी-वेंडर ऑनबोर्डिंग और त्वरित डुअल बुकिंग सिस्टम',
+    propertyDetails: '१. संपत्ति और मालिक का विवरण',
+    locationDetails: 'होटल का स्थान और पता',
+    quickFillDemo: '⚡ डेमो डेटा',
+    signIn: 'लॉग इन',
+    close: 'बंद करें',
+    proceedPayment: 'भुगतान और पंजीकरण करें (₹99)',
+    entryFee: 'प्रवेश शुल्क: ₹99',
+    freeTrialMonth: 'पहला महीना फ्री (30 दिन)',
+    mobileNavRooms: 'कमरे',
+    mobileNavPolice: 'पुलिस',
+    mobileNavBook: '+बुक',
+    mobileNavAccounts: 'हिसाब',
+    mobileNavBilling: 'बिल',
+    mobileNavGuest: 'ग्राहक'
   }
 };
 

@@ -24,6 +24,7 @@ import {
   Receipt
 } from 'lucide-react';
 import { LanguageCode, getTranslations } from '../utils/translations';
+import { LanguageSelector } from './LanguageSelector';
 
 interface NavbarProps {
   hotel: HotelProfile;
@@ -253,7 +254,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   ? 'bg-amber-100 text-amber-900 border-amber-300 shadow-xs'
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
               }`}
-              title={isCompactMode ? 'সৰু স্ক্ৰীণ সক্ৰিয় (Compact Mode Active)' : 'Fit entire screen on mobile'}
+              title={isCompactMode ? 'Compact Mode Active' : 'Fit entire screen on mobile'}
             >
               {isCompactMode ? (
                 <>
@@ -264,27 +265,27 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <>
                   <Minimize2 className="w-3 h-3 text-slate-600" />
                   <span className="hidden xs:inline">{t.compactMode}</span>
-                  <span className="xs:hidden">সৰু</span>
+                  <span className="xs:hidden">Fit</span>
                 </>
               )}
             </button>
 
-            {/* Room Manager Button ("+ কোঠা / Add Room") */}
+            {/* Room Manager Button ("Rooms") */}
             <button
               onClick={onOpenRoomManager}
               className="flex items-center gap-1 px-1.5 sm:px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-bold text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200 transition-all cursor-pointer"
-              title="Add New Room or Manage Rooms (কোঠা যোগ কৰক)"
+              title="Add New Room or Manage Rooms"
             >
               <BedDouble className="w-3.5 h-3.5 text-teal-600 shrink-0" />
               <span className="hidden sm:inline">{t.rooms}</span>
-              <span className="sm:hidden">+ৰূম</span>
+              <span className="sm:hidden">Rooms</span>
             </button>
 
-            {/* Primary Add Booking Button ("+ বুক কৰক / Add Booking") */}
+            {/* Primary Add Booking Button */}
             <button
               onClick={onOpenAddBooking}
               className="flex items-center gap-1 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-xl text-xs sm:text-sm font-extrabold text-white bg-[#0B2545] hover:bg-[#133560] active:scale-95 shadow-md shadow-slate-900/15 transition-all cursor-pointer shrink-0"
-              title="Add New Booking (কোঠা বুক কৰক)"
+              title="Add New Booking"
             >
               <PlusCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#00E5A3] shrink-0" />
               <span>{t.addBooking}</span>
@@ -295,11 +296,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 onClick={onOpenAccounting}
                 className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-bold text-amber-950 bg-amber-50 hover:bg-amber-100 border border-amber-300 transition-all cursor-pointer shadow-xs shrink-0"
-                title="হোটেল একাউণ্টিং আৰু ৰাজহ বহী (Hotel Accounting & Revenue Ledger)"
+                title="Hotel Revenue & Commission Accounting"
               >
                 <DollarSign className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-                <span className="hidden xs:inline">হিচাপ</span>
-                <span className="xs:hidden">হিচাপ</span>
+                <span className="hidden xs:inline">{language === 'en' ? 'Accounts' : t.accounting.split(' ')[0]}</span>
+                <span className="xs:hidden">{language === 'en' ? 'Accts' : 'Accounts'}</span>
               </button>
             )}
 
@@ -308,11 +309,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 onClick={onOpenBilling}
                 className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-bold text-teal-950 bg-teal-50 hover:bg-teal-100 border border-teal-300 transition-all cursor-pointer shadow-xs shrink-0"
-                title="চালান আৰু বিলিং (Billing & Invoices)"
+                title="Billing & Invoice Management"
               >
                 <Receipt className="w-3.5 h-3.5 text-teal-700 shrink-0" />
-                <span className="hidden xs:inline">বিলিং</span>
-                <span className="xs:hidden">বিল</span>
+                <span className="hidden xs:inline">{language === 'en' ? 'Invoices' : t.billing.split(' ')[0]}</span>
+                <span className="xs:hidden">{language === 'en' ? 'Bills' : 'Bills'}</span>
               </button>
             )}
 
@@ -321,11 +322,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 onClick={onOpenPoliceVerification}
                 className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-bold text-rose-950 bg-rose-50 hover:bg-rose-100 border border-rose-300 transition-all cursor-pointer shadow-xs shrink-0"
-                title="পুলিচ ভেৰিফিকেচন আৰু অতিথি ৰিপৰ্ট (Police Verification & Guest Reporting)"
+                title="Police Verification & Guest Form C"
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                <span className="hidden xs:inline">পুলিচ</span>
-                <span className="xs:hidden">পুলিচ</span>
+                <span className="hidden xs:inline">{language === 'en' ? 'Police' : t.policeVerification.split(' ')[0]}</span>
+                <span className="xs:hidden">{language === 'en' ? 'Police' : 'Police'}</span>
               </button>
             )}
 
@@ -333,11 +334,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               onClick={onOpenCustomerView}
               className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 transition-all cursor-pointer shadow-xs shrink-0"
-              title="হোটেলৰ গ্ৰাহক পৰ্টেল (Customer Guest Portal)"
+              title="Open Customer Guest Portal"
             >
               <Smartphone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
               <span className="hidden xs:inline">{t.guestPortal}</span>
-              <span className="xs:hidden">গ্ৰাহক</span>
+              <span className="xs:hidden">{language === 'en' ? 'Guest' : 'গ্ৰাহক'}</span>
             </button>
 
             {/* Subscription Button (5% Commission & 1 Month Free badge) */}
@@ -347,8 +348,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="View 1-Month Free Subscription & 5% Commission Model"
             >
               <Sparkles className="w-3 h-3 text-teal-600" />
-              <span>১ মাহ ফ্ৰী • ৫%</span>
+              <span>{language === 'en' ? '1-Mo Free • 5%' : '১ মাহ ফ্ৰী • ৫%'}</span>
             </button>
+
+            {/* Language Switcher Selector */}
+            {onLanguageChange && (
+              <LanguageSelector
+                language={language}
+                onLanguageChange={onLanguageChange}
+                variant="header"
+              />
+            )}
 
             {/* User Profile & Logout */}
             {authUser ? (
@@ -362,7 +372,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     type="button"
                     onClick={onLogout}
                     className="ml-1 p-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors cursor-pointer"
-                    title="লগআউট কৰক (Logout)"
+                    title="Sign Out"
                   >
                     <LogOut className="w-3.5 h-3.5" />
                   </button>
@@ -373,7 +383,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 type="button"
                 onClick={onOpenAuth}
                 className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-bold bg-teal-50 hover:bg-teal-100 text-teal-900 border border-teal-300 transition-all cursor-pointer shadow-xs shrink-0"
-                title="প্ৰৱেশ / লগইন কৰক (Sign In)"
+                title="Sign In"
               >
                 <LogIn className="w-3.5 h-3.5 text-teal-700 shrink-0" />
                 <span>{t.login}</span>
