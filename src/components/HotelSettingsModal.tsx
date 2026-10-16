@@ -106,9 +106,77 @@ export const HotelSettingsModal: React.FC<HotelSettingsModalProps> = ({
             </div>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                City / Destination (চহৰ বা ভ্ৰমণস্থলী) *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 font-bold text-slate-900 focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Area / Locality / Range (স্থানীয় অঞ্চল বা স্থান)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Kohora / Beltola / GS Road"
+                value={formData.area || ''}
+                onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 text-slate-900 focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Landmark (বিশিষ্ট চিনাক্তকৰণ লেণ্ডমাৰ্ক)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Near Safari Gate 1 / Near Kamakhya"
+                value={formData.landmark || ''}
+                onChange={(e) => setFormData({ ...formData, landmark: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 text-slate-900 focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-bold text-slate-700">
+                  Google Maps Link (গুগল মেপ লিংক)
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const query = `${formData.name} ${formData.area || ''} ${formData.city} ${formData.state} ${formData.pincode || ''}`.trim();
+                    setFormData({ ...formData, mapLocationUrl: `https://maps.google.com/?q=${encodeURIComponent(query)}` });
+                  }}
+                  className="text-[10px] text-teal-700 hover:text-teal-900 font-bold bg-teal-50 hover:bg-teal-100 px-1.5 py-0.5 rounded cursor-pointer"
+                >
+                  ⚡ মেপ লিংক তৈয়াৰ কৰক
+                </button>
+              </div>
+              <input
+                type="url"
+                placeholder="https://maps.google.com/?q=..."
+                value={formData.mapLocationUrl || ''}
+                onChange={(e) => setFormData({ ...formData, mapLocationUrl: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 text-slate-900 focus:ring-2 focus:ring-teal-500 focus:outline-hidden truncate"
+              />
+            </div>
+          </div>
+
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">
-              Address & Landmarks
+              Full Street Address (সম্পূৰ্ণ ঠিকনা)
             </label>
             <input
               type="text"
@@ -118,21 +186,10 @@ export const HotelSettingsModal: React.FC<HotelSettingsModalProps> = ({
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                City / Town
-              </label>
-              <input
-                type="text"
-                value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 text-slate-900"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                State
+                State (ৰাজ্য)
               </label>
               <input
                 type="text"
@@ -143,7 +200,7 @@ export const HotelSettingsModal: React.FC<HotelSettingsModalProps> = ({
             </div>
             <div>
               <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                Pincode
+                Pincode (পিন ক’ড)
               </label>
               <input
                 type="text"

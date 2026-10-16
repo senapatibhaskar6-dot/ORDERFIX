@@ -290,8 +290,11 @@ app.post('/api/setup/register', async (req, res) => {
     email = '',
     address = '',
     city = 'Guwahati',
+    area = '',
+    landmark = '',
     state = 'Assam',
     pincode = '',
+    mapLocationUrl = '',
     description = '',
     images = [],
     amenities = [],
@@ -321,15 +324,18 @@ app.post('/api/setup/register', async (req, res) => {
       await client.query(`
         INSERT INTO hotels (
           id, name, property_type, owner_name, phone, whatsapp_number, email, address,
-          city, state, pincode, description, images, amenities, entry_fee_paid, entry_fee_amount,
+          city, area, landmark, state, pincode, map_location_url, description, images, amenities, entry_fee_paid, entry_fee_amount,
           entry_fee_txnid, subscription_plan, subscription_expires_at, trial_days_left,
           police_station_name, police_station_whatsapp, police_station_incharge, hotel_license_number,
           is_registered, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, TRUE, 99, $15, 'trial_free_month', $16, 30, $17, $18, $19, $20, TRUE, NOW())
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, TRUE, 99, $18, 'trial_free_month', $19, 30, $20, $21, $22, $23, TRUE, NOW())
         ON CONFLICT (id) DO UPDATE SET
           name = EXCLUDED.name,
           images = EXCLUDED.images,
           amenities = EXCLUDED.amenities,
+          area = EXCLUDED.area,
+          landmark = EXCLUDED.landmark,
+          map_location_url = EXCLUDED.map_location_url,
           updated_at = NOW()
       `, [
         hotelId,
@@ -341,8 +347,11 @@ app.post('/api/setup/register', async (req, res) => {
         email,
         address,
         city,
+        area,
+        landmark,
         state,
         pincode,
+        mapLocationUrl,
         description,
         JSON.stringify(images),
         JSON.stringify(amenities),
@@ -406,6 +415,9 @@ app.post('/api/setup/register', async (req, res) => {
         email,
         address,
         city,
+        area,
+        landmark,
+        mapLocationUrl,
         state,
         pincode,
         currency: '₹',
@@ -500,6 +512,9 @@ app.get('/api/data', async (req, res) => {
         email: h.email || '',
         address: h.address || '',
         city: h.city || '',
+        area: h.area || '',
+        landmark: h.landmark || '',
+        mapLocationUrl: h.map_location_url || '',
         state: h.state || 'Assam',
         pincode: h.pincode || '',
         currency: '₹',

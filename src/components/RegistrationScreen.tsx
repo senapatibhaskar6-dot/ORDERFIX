@@ -29,7 +29,9 @@ import {
   Layers,
   Eye,
   EyeOff,
-  LogIn
+  LogIn,
+  ExternalLink,
+  Compass
 } from 'lucide-react';
 import { EntryFeePaymentModal } from './EntryFeePaymentModal';
 import { SAMPLE_HOTEL_IMAGES, KAZIRANGA_HOTEL_IMAGES, saveAuthUser } from '../utils/storage';
@@ -58,6 +60,20 @@ const AVAILABLE_AMENITIES = [
   'Electric Tea/Coffee Maker'
 ];
 
+export const POPULAR_DESTINATIONS = [
+  { city: 'Guwahati', labelAs: 'গুৱাহাটী', area: 'Paltan Bazar / Beltola', landmark: 'Near Railway Station / Kamakhya' },
+  { city: 'Kaziranga', labelAs: 'কাজিৰঙা', area: 'Kohora Central Range', landmark: 'Near Main Jeep Safari Entry Gate' },
+  { city: 'Tezpur', labelAs: 'তেজপুৰ', area: 'Mahabhairab / Agnigarh', landmark: 'Near Agnigarh Park & Kolia Bhomora' },
+  { city: 'Shillong', labelAs: 'শ্বিলং', area: 'Police Bazar', landmark: 'Near Ward’s Lake' },
+  { city: 'Majuli', labelAs: 'মাজুলী', area: 'Garmur / Kamalabari', landmark: 'Near Garmur Satra' },
+  { city: 'Jorhat', labelAs: 'যোৰহাট', area: 'Gar-Ali / Cinnamara', landmark: 'Near Tocklai Tea Estate' },
+  { city: 'Dibrugarh', labelAs: 'ডিব্ৰুগড়', area: 'Graham Bazar / Chowkidinghee', landmark: 'Near Brahmaputra Riverfront' },
+  { city: 'Sivasagar', labelAs: 'শিৱসাগৰ', area: 'Station Road', landmark: 'Near Rang Ghar & Joysagar Lake' },
+  { city: 'Manas', labelAs: 'মানাহ', area: 'Barpeta Road / Bansbari', landmark: 'Near Manas National Park Gate' },
+  { city: 'Haflong', labelAs: 'হাফলং', area: 'Haflong Hill Station', landmark: 'Near Haflong Lake' },
+  { city: 'Silchar', labelAs: 'শিলচৰ', area: 'Park Road / Tarapur', landmark: 'Near Silchar Railway Station' }
+];
+
 export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({
   onCompleteRegistration,
   onCancel,
@@ -75,10 +91,16 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({
   const [whatsappNumber, setWhatsappNumber] = useState('');
   const [sameAsPhone, setSameAsPhone] = useState(true);
   const [email, setEmail] = useState('');
+  
+  // Structured Location States
   const [city, setCity] = useState('Guwahati');
+  const [area, setArea] = useState('Uzan Bazar / Riverside');
+  const [landmark, setLandmark] = useState('Near Brahmaputra Heritage & High Court');
   const [state, setState] = useState('Assam');
-  const [address, setAddress] = useState('');
+  const [address, setAddress] = useState('MG Road, Near Uzan Bazar Ghat');
   const [pincode, setPincode] = useState('781001');
+  const [mapLocationUrl, setMapLocationUrl] = useState('https://maps.google.com/?q=Uzan+Bazar+Guwahati');
+  
   const [policeStationName, setPoliceStationName] = useState('Dispur Police Station, Guwahati');
   const [policeStationWhatsApp, setPoliceStationWhatsApp] = useState('+91 94350 12345');
   const [policeStationIncharge, setPoliceStationIncharge] = useState('Inspector B. Borah, OC Dispur');
@@ -144,9 +166,12 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({
     setWhatsappNumber('9864012345');
     setEmail('stay@brahmaputraheritage.in');
     setCity('Guwahati');
+    setArea('Uzan Bazar / Riverside');
+    setLandmark('Near Brahmaputra Heritage & Gauhati High Court');
     setState('Assam');
     setAddress('MG Road, Near Uzan Bazar Ghat');
     setPincode('781001');
+    setMapLocationUrl('https://maps.google.com/?q=Uzan+Bazar+Guwahati+Assam');
     setPoliceStationName('Panbazar Police Station, Guwahati');
     setPoliceStationWhatsApp('+91 94350 98765');
     setPoliceStationIncharge('OC Panbazar');
@@ -166,6 +191,22 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({
     }
     if (!phone.trim()) {
       setErrorMsg('অনুগ্ৰহ কৰি মোবাইল নম্বৰ লিখক (Mobile Phone is required)');
+      return;
+    }
+    if (!city.trim()) {
+      setErrorMsg('অনুগ্ৰহ কৰি হোটেলৰ চহৰ বা ভ্ৰমণস্থলী নিৰ্বাচন কৰক (City / Tourist Destination is required so guests can search by location)');
+      return;
+    }
+    if (!area.trim()) {
+      setErrorMsg('অনুগ্ৰহ কৰি হোটেলৰ স্থানীয় অঞ্চল/স্থান (Locality / Area / Range) দিয়ক (e.g. Kohora, Beltola, Paltan Bazar)');
+      return;
+    }
+    if (!landmark.trim()) {
+      setErrorMsg('অনুগ্ৰহ কৰি প্ৰধান লেণ্ডমাৰ্ক (Prominent Landmark) দিয়ক যাতে গ্ৰাহকে সহজে বিচাৰি পায়');
+      return;
+    }
+    if (!address.trim()) {
+      setErrorMsg('অনুগ্ৰহ কৰি হোটেলৰ সম্পূৰ্ণ ঠিকনা (Full Street Address) দিয়ক');
       return;
     }
     if (!password || password.length < 4) {
@@ -227,13 +268,16 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({
       id: hotelId,
       name: hotelName.trim(),
       tagline: `${propertyType} • Hospitality & Verified Safe Stay`,
-      description: description.trim() || `${propertyType} in ${city}, ${state} offering comfortable stays with modern facilities.`,
+      description: description.trim() || `${propertyType} in ${area ? area + ', ' : ''}${city}, ${state} offering comfortable stays with modern facilities.`,
       ownerName: ownerName.trim() || 'Hotel Owner',
       phone: phone.trim(),
       whatsappNumber: effectiveWhatsApp.trim(),
       email: email.trim() || 'info@hotel.com',
-      address: address.trim() || `${city}, ${state}`,
+      address: address.trim() || `${area ? area + ', ' : ''}${city}, ${state}`,
       city: city.trim() || 'Guwahati',
+      area: area.trim(),
+      landmark: landmark.trim(),
+      mapLocationUrl: mapLocationUrl.trim() || undefined,
       state: state.trim() || 'Assam',
       pincode: pincode.trim(),
       currency: '₹',
@@ -562,39 +606,229 @@ export const RegistrationScreen: React.FC<RegistrationScreenProps> = ({
               </div>
             </div>
 
-            {/* Location & Address */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="sm:col-span-2">
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                  ঠিকনা (Address / Landmark)
-                </label>
-                <div className="relative">
-                  <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+            {/* Location & Address Section - Required for Online Booking by Location */}
+            <div className="bg-gradient-to-br from-teal-50/70 via-white to-slate-50 p-4 rounded-2xl border-2 border-teal-200/90 space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <label className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4 text-teal-600 shrink-0" />
+                    <span>হোটেলৰ অৱস্থান, চহৰ আৰু লেণ্ডমাৰ্ক (Hotel Location & Landmark Details) *</span>
+                  </label>
+                  <p className="text-[10px] text-teal-900 font-semibold mt-0.5">
+                    অনলাইন বুকিং কৰিবলৈ গ্ৰাহকে লোকেশ্যন (কাজিৰঙা, গুৱাহাটী, তেজপুৰ আদি) হিচাপে বিচাৰিব, গতিকে সঠিক অৱস্থান নিৰ্বাচন কৰক।
+                  </p>
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-wider bg-teal-600 text-white px-2 py-0.5 rounded-md shrink-0">
+                  বাধ্যতামূলক (Mandatory)
+                </span>
+              </div>
+
+              {/* Popular Tourist Destination Quick Chips */}
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold text-slate-600 block">
+                  দ্ৰুত বাছনি কৰক (Quick Select Travel Destination):
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {POPULAR_DESTINATIONS.map((dest) => {
+                    const isSelected = city.toLowerCase() === dest.city.toLowerCase();
+                    return (
+                      <button
+                        key={dest.city}
+                        type="button"
+                        onClick={() => {
+                          setCity(dest.city);
+                          setArea(dest.area);
+                          setLandmark(dest.landmark);
+                          if (!address || address.includes('Brahmaputra') || address.includes('MG Road')) {
+                            setAddress(`${dest.area}, Near ${dest.landmark}`);
+                          }
+                        }}
+                        className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                          isSelected
+                            ? 'bg-[#0B2545] text-white shadow-xs scale-102 ring-2 ring-teal-400'
+                            : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300'
+                        }`}
+                      >
+                        <span>{dest.labelAs}</span>
+                        <span className={`text-[10px] ${isSelected ? 'text-teal-300' : 'text-slate-400'}`}>({dest.city})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* City and Area Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    চহৰ বা ভ্ৰমণস্থলী (City / Destination) *
+                  </label>
                   <input
                     type="text"
-                    placeholder="e.g. MG Road, Near Uzan Bazar"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 text-slate-900 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
+                    required
+                    placeholder="e.g. Kaziranga / Guwahati / Tezpur"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-slate-900 font-bold text-xs bg-white focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    অঞ্চল / পৰিসৰ (Locality / Area / Range) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Kohora Central Range / Beltola / GS Road"
+                    value={area}
+                    onChange={(e) => setArea(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-slate-900 font-semibold text-xs bg-white focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                  চহৰ আৰু ৰাজ্য (City, State)
-                </label>
-                <input
-                  type="text"
-                  placeholder="Guwahati, Assam"
-                  value={`${city}, ${state}`}
-                  onChange={(e) => {
-                    const parts = e.target.value.split(',');
-                    setCity(parts[0]?.trim() || '');
-                    if (parts[1]) setState(parts[1]?.trim());
-                  }}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-slate-900 font-semibold text-xs focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
-                />
+              {/* Landmark and Street Address */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    প্ৰধান লেণ্ডমাৰ্ক (Prominent Landmark) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Near Safari Entry Gate 1 / Near Kamakhya Temple"
+                    value={landmark}
+                    onChange={(e) => setLandmark(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-slate-900 text-xs bg-white focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    সম্পূৰ্ণ ঠিকনা (Full Street Address) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Kohora Central Range, Near Forest Office"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-slate-900 text-xs bg-white focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
+                  />
+                </div>
+              </div>
+
+              {/* State, Pincode & Google Maps URL */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    ৰাজ্য (State)
+                  </label>
+                  <input
+                    type="text"
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-slate-900 font-semibold text-xs bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    পিন কোড (Pincode)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="785609"
+                    value={pincode}
+                    onChange={(e) => setPincode(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-slate-900 font-mono text-xs bg-white"
+                  />
+                </div>
+
+                <div className="sm:col-span-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                      <Compass className="w-3.5 h-3.5 text-teal-600" />
+                      <span>গুগল মেপ লিংক (Google Maps Location URL)</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const query = `${hotelName ? hotelName + ' ' : ''}${area ? area + ' ' : ''}${city} ${state} ${pincode}`.trim();
+                        const generatedUrl = `https://maps.google.com/?q=${encodeURIComponent(query)}`;
+                        setMapLocationUrl(generatedUrl);
+                      }}
+                      className="text-[10px] text-teal-700 hover:text-teal-900 font-bold bg-teal-100/70 hover:bg-teal-200/70 px-2 py-0.5 rounded cursor-pointer transition-colors flex items-center gap-1"
+                    >
+                      <span>⚡ ঠিকনাৰ পৰা মেপ লিংক তৈয়াৰ কৰক</span>
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      placeholder="https://maps.google.com/?q=..."
+                      value={mapLocationUrl}
+                      onChange={(e) => setMapLocationUrl(e.target.value)}
+                      className="flex-1 px-3 py-2 rounded-xl border border-slate-300 text-slate-900 text-xs bg-white truncate"
+                    />
+                    {mapLocationUrl && (
+                      <a
+                        href={mapLocationUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-teal-300 text-xs font-bold flex items-center gap-1 shrink-0"
+                        title="Open Map Preview"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">মেপত চাওক</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Real-time Guest Discovery Preview Card */}
+              <div className="mt-3 p-3 rounded-xl bg-teal-900/5 border border-teal-200/80 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-teal-800 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-teal-600" />
+                    <span>গ্ৰাহকে অনলাইন বুকিং চাৰ্চত এনেদৰে দেখিব (Guest Search Preview):</span>
+                  </span>
+                  <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded">
+                    সক্ৰিয় অৱস্থান
+                  </span>
+                </div>
+                
+                <div className="bg-white p-2.5 rounded-lg border border-slate-200 shadow-2xs flex items-center justify-between gap-2 flex-wrap">
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                      <span>{hotelName || 'আপোনাৰ হোটেলৰ নাম (Your Hotel Name)'}</span>
+                      <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-1.5 py-0.2 rounded">
+                        {propertyType}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-600 flex items-center gap-1 font-semibold">
+                      <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
+                      <span>{city || 'চহৰ'}, {state}</span>
+                      <span className="text-slate-300">•</span>
+                      <span className="text-teal-700">{area || 'অঞ্চল/পৰিসৰ'}</span>
+                    </div>
+                    {landmark && (
+                      <div className="text-[10px] text-slate-500 flex items-center gap-1">
+                        <span>🏛️ লেণ্ডমাৰ্ক:</span>
+                        <span className="font-semibold text-slate-700">{landmark}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <span className="text-[10px] font-extrabold text-teal-800 bg-teal-50 border border-teal-200 px-2 py-1 rounded-md inline-flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-teal-600" />
+                      <span>চাৰ্চত উপলব্ধ</span>
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

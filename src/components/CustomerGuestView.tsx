@@ -39,7 +39,9 @@ import {
   Car,
   Utensils,
   Zap,
-  Info
+  Info,
+  Compass,
+  ExternalLink
 } from 'lucide-react';
 import { OrderfixLogo } from './Logo';
 
@@ -78,7 +80,10 @@ export const CustomerGuestView: React.FC<CustomerGuestViewProps> = ({
   const [guestCount, setGuestCount] = useState(2);
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'available'>('all');
   const [copiedLink, setCopiedLink] = useState(false);
-  const [cityFilter, setCityFilter] = useState<string>('all');
+
+  // Location-based Search and Filtering
+  const [locationSearchQuery, setLocationSearchQuery] = useState<string>('');
+  const [selectedDestination, setSelectedDestination] = useState<string>('all');
 
   // Image Gallery Lightbox Modal State
   const [lightboxImageIndex, setLightboxImageIndex] = useState<number | null>(null);
@@ -97,6 +102,60 @@ export const CustomerGuestView: React.FC<CustomerGuestViewProps> = ({
   const [searchedBooking, setSearchedBooking] = useState<Booking | null | 'not_found'>(null);
 
   const nights = calculateNights(checkInDate, checkOutDate);
+
+  // Filter hotels based on selected destination and location search query
+  const filteredHotels = hotels.filter((h) => {
+    // 1. Destination tab filter
+    if (selectedDestination !== 'all' && h.city.toLowerCase() !== selectedDestination.toLowerCase()) {
+      return false;
+    }
+    // 2. Search query filter (matches city, area, landmark, address, hotel name, state)
+    if (locationSearchQuery.trim()) {
+      const q = locationSearchQuery.toLowerCase().trim();
+      const matchCity = h.city.toLowerCase().includes(q);
+      const matchArea = (h.area || '').toLowerCase().includes(q);
+      const matchLandmark = (h.landmark || '').toLowerCase().includes(q);
+      const matchAddress = (h.address || '').toLowerCase().includes(q);
+      const matchName = h.name.toLowerCase().includes(q);
+      const matchState = (h.state || '').toLowerCase().includes(q);
+
+      // Support Assamese search words
+      const matchAssamese =
+        (q.includes('কাজিৰঙা') && h.city.toLowerCase().includes('kaziranga')) ||
+        (q.includes('গুৱাহাটী') && h.city.toLowerCase().includes('guwahati')) ||
+        (q.includes('তেজপুৰ') && h.city.toLowerCase().includes('tezpur')) ||
+        (q.includes('শ্বিলং') && h.city.toLowerCase().includes('shillong')) ||
+        (q.includes('মাজুলী') && h.city.toLowerCase().includes('majuli')) ||
+        (q.includes('যোৰহাট') && h.city.toLowerCase().includes('jorhat')) ||
+        (q.includes('ডিব্ৰুগড়') && h.city.toLowerCase().includes('dibrugarh')) ||
+        (q.includes('শিৱসাগৰ') && h.city.toLowerCase().includes('sivasagar')) ||
+        (q.includes('মানাহ') && h.city.toLowerCase().includes('manas')) ||
+        (q.includes('হাফলং') && h.city.toLowerCase().includes('haflong'));
+
+      return matchCity || matchArea || matchLandmark || matchAddress || matchName || matchState || matchAssamese;
+    }
+    return true;
+  });
+
+  // Unique cities from currently loaded hotels
+  const uniqueCities = Array.from(new Set(hotels.map((h) => h.city))).filter(Boolean);
+
+  // Helper to calculate starting room price for any hotel
+  const getHotelStartingPrice = (hotelId: string) => {
+    const hotelRooms = rooms.filter((r) => r.hotelId === hotelId);
+    if (hotelRooms.length === 0) return 1800;
+    return Math.min(...hotelRooms.map((r) => r.basePrice));
+  };
+
+  // Helper to calculate total rooms for any hotel
+  const getHotelRoomsCount = (hotelId: string) => {
+    return rooms.filter((r) => r.hotelId === hotelId).length;
+  };
+
+  // Hotels in the same destination as currently active hotel
+  const sisterHotelsInDestination = hotels.filter(
+    (h) => h.city.toLowerCase() === activeHotel.city.toLowerCase() && h.id !== activeHotel.id
+  );
 
   // Filter rooms belonging to current active hotel
   const activeHotelRooms = rooms.filter(
@@ -119,14 +178,6 @@ export const CustomerGuestView: React.FC<CustomerGuestViewProps> = ({
   const displayedRooms = selectedFilter === 'available'
     ? roomsWithAvailability.filter((r) => r.isAvailable)
     : roomsWithAvailability;
-
-  // Multi-vendor hotel filtering
-  const filteredHotels = hotels.filter((h) => {
-    if (cityFilter === 'all') return true;
-    return h.city.toLowerCase() === cityFilter.toLowerCase();
-  });
-
-  const uniqueCities = Array.from(new Set(hotels.map((h) => h.city))).filter(Boolean);
 
   const handleShare = () => {
     const portalUrl = `${window.location.origin}?view=guest&hotel=${activeHotel.id}`;
@@ -257,20 +308,36 @@ export const CustomerGuestView: React.FC<CustomerGuestViewProps> = ({
           </div>
 
           {/* Hotel Name & Verification Badge */}
-          <div className="mt-3 flex items-start justify-between gap-2">
-            <div>
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-lg font-black text-white leading-tight">
+          <div className="mt-2.5 flex items-start justify-between gap-2">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h1 className="text-base sm:text-lg font-black text-white leading-tight">
                   {activeHotel.name}
                 </h1>
                 <span title="Assam Police KYC Verified Safe Stay">
                   <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
                 </span>
               </div>
-              <p className="text-xs text-slate-300 flex items-center gap-1 mt-0.5">
-                <MapPin className="w-3 h-3 text-teal-400 shrink-0" />
-                <span className="truncate">{activeHotel.city}, {activeHotel.state}</span>
-              </p>
+              <div className="flex items-center gap-2 flex-wrap text-[11px] text-slate-300">
+                <span className="flex items-center gap-1 font-semibold text-teal-300">
+                  <MapPin className="w-3 h-3 text-teal-400 shrink-0" />
+                  <span>{activeHotel.city}, {activeHotel.state}</span>
+                </span>
+                {activeHotel.area && (
+                  <span className="text-slate-400">• {activeHotel.area}</span>
+                )}
+                <a
+                  href={activeHotel.mapLocationUrl || `https://maps.google.com/?q=${encodeURIComponent(`${activeHotel.name} ${activeHotel.area || ''} ${activeHotel.city} ${activeHotel.state}`)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-[10px] font-bold text-teal-300 hover:text-white bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded-md border border-white/10 transition-colors"
+                  title="Google Maps ত সঠিক অৱস্থান চাওক"
+                >
+                  <Compass className="w-3 h-3 text-teal-300" />
+                  <span>মেপ চাওক</span>
+                  <ExternalLink className="w-2.5 h-2.5" />
+                </a>
+              </div>
             </div>
 
             <button
@@ -280,6 +347,113 @@ export const CustomerGuestView: React.FC<CustomerGuestViewProps> = ({
               <Building2 className="w-3.5 h-3.5 text-teal-300" />
               <span>অন্য হোটেল ({hotels.length})</span>
             </button>
+          </div>
+
+          {/* DEDICATED LOCATION & DESTINATION SEARCH BAR */}
+          <div className="mt-3 space-y-2 bg-slate-900/60 p-2.5 rounded-2xl border border-white/15 backdrop-blur-xs">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-[10px] font-black uppercase tracking-wider text-teal-300 flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-teal-400" />
+                <span>অনলাইন বুকিং লোকেশ্যন চাৰ্চ (Find Hotels by Location)</span>
+              </span>
+              {(locationSearchQuery || selectedDestination !== 'all') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLocationSearchQuery('');
+                    setSelectedDestination('all');
+                  }}
+                  className="text-[10px] text-teal-300 hover:text-white font-bold underline cursor-pointer"
+                >
+                  সকলো চাওক (Reset)
+                </button>
+              )}
+            </div>
+
+            {/* Location Search Input */}
+            <div className="relative">
+              <Search className="w-4 h-4 text-teal-400 absolute left-3 top-2.5" />
+              <input
+                type="text"
+                placeholder="চহৰ, স্থান বা লেণ্ডমাৰ্ক (e.g. Kaziranga, Guwahati, Tezpur, Shillong...)"
+                value={locationSearchQuery}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setLocationSearchQuery(val);
+                  if (activePortalTab === 'my_booking') {
+                    setActivePortalTab('browse');
+                  }
+                  if (val.trim()) {
+                    const matched = hotels.find((h) =>
+                      h.city.toLowerCase().includes(val.toLowerCase()) ||
+                      (h.area || '').toLowerCase().includes(val.toLowerCase()) ||
+                      (h.landmark || '').toLowerCase().includes(val.toLowerCase())
+                    );
+                    if (matched) {
+                      onSelectHotel(matched.id);
+                    }
+                  }
+                }}
+                className="w-full pl-9 pr-8 py-2 rounded-xl bg-slate-950/90 border border-teal-500/40 text-white placeholder-slate-400 text-xs font-bold focus:outline-hidden focus:ring-2 focus:ring-teal-400"
+              />
+              {locationSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setLocationSearchQuery('')}
+                  className="absolute right-2.5 top-2.5 text-slate-400 hover:text-white cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Horizontal Scrollable Destination Chips */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+              {[
+                { city: 'all', label: 'সকলো স্থান', icon: '📍' },
+                { city: 'Kaziranga', label: 'কাজিৰঙা', icon: '🦏' },
+                { city: 'Guwahati', label: 'গুৱাহাটী', icon: '⛩️' },
+                { city: 'Tezpur', label: 'তেজপুৰ', icon: '🏞️' },
+                { city: 'Shillong', label: 'শ্বিলং', icon: '⛰️' },
+                { city: 'Majuli', label: 'মাজুলী', icon: '🏝️' },
+                { city: 'Jorhat', label: 'যোৰহাট', icon: '🍃' },
+                { city: 'Dibrugarh', label: 'ডিব্ৰুগড়', icon: '🌊' },
+                { city: 'Sivasagar', label: 'শিৱসাগৰ', icon: '🏛️' },
+                { city: 'Manas', label: 'মানাহ', icon: '🌿' }
+              ].map((dest) => {
+                const count = dest.city === 'all'
+                  ? hotels.length
+                  : hotels.filter((h) => h.city.toLowerCase() === dest.city.toLowerCase()).length;
+                const isSelected = selectedDestination.toLowerCase() === dest.city.toLowerCase();
+
+                return (
+                  <button
+                    key={dest.city}
+                    type="button"
+                    onClick={() => {
+                      setSelectedDestination(dest.city);
+                      if (dest.city !== 'all') {
+                        const matched = hotels.find((h) => h.city.toLowerCase() === dest.city.toLowerCase());
+                        if (matched) {
+                          onSelectHotel(matched.id);
+                        }
+                      }
+                    }}
+                    className={`px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 flex items-center gap-1 ${
+                      isSelected
+                        ? 'bg-teal-400 text-slate-950 shadow-md font-black ring-2 ring-white scale-102'
+                        : 'bg-white/10 text-slate-200 hover:bg-white/20 hover:text-white border border-white/10'
+                    }`}
+                  >
+                    <span>{dest.icon}</span>
+                    <span>{dest.label}</span>
+                    <span className={`text-[10px] px-1 rounded-full ${isSelected ? 'bg-slate-950/20 text-slate-950 font-black' : 'bg-black/30 text-slate-300'}`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Tab Navigation */}
@@ -303,7 +477,7 @@ export const CustomerGuestView: React.FC<CustomerGuestViewProps> = ({
                   : 'text-slate-300 hover:text-white'
               }`}
             >
-              হোটেল তালিকা ({hotels.length})
+              হোটেল তালিকা ({filteredHotels.length})
             </button>
 
             <button
@@ -323,6 +497,76 @@ export const CustomerGuestView: React.FC<CustomerGuestViewProps> = ({
         {activePortalTab === 'browse' && (
           <div className="p-3.5 sm:p-4 space-y-4">
             
+            {/* ACTIVE HOTEL DETAILED LOCATION & MAP CARD */}
+            <div className="bg-gradient-to-r from-teal-50 via-white to-slate-50 p-3 rounded-2xl border border-teal-200/90 shadow-2xs space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="space-y-0.5">
+                  <div className="text-xs font-black text-slate-900 flex items-center gap-1.5 flex-wrap">
+                    <MapPin className="w-4 h-4 text-rose-500 shrink-0" />
+                    <span>{activeHotel.city}, {activeHotel.state}</span>
+                    {activeHotel.area && (
+                      <span className="text-teal-700 font-bold">• {activeHotel.area}</span>
+                    )}
+                  </div>
+                  {activeHotel.landmark && (
+                    <div className="text-[11px] text-slate-700 flex items-center gap-1 font-semibold">
+                      <span>🏛️ বিশিষ্ট লেণ্ডমাৰ্ক:</span>
+                      <span className="text-slate-900 font-bold">{activeHotel.landmark}</span>
+                    </div>
+                  )}
+                  <div className="text-[10px] text-slate-500 truncate max-w-sm">
+                    {activeHotel.address}
+                  </div>
+                </div>
+
+                <span className="text-[10px] font-black uppercase tracking-wider bg-teal-100 text-teal-800 px-2 py-0.5 rounded-md shrink-0">
+                  সত্যাপিত অৱস্থান
+                </span>
+              </div>
+
+              <div className="pt-1.5 border-t border-teal-100 flex items-center justify-between gap-2 flex-wrap">
+                <a
+                  href={activeHotel.mapLocationUrl || `https://maps.google.com/?q=${encodeURIComponent(`${activeHotel.name} ${activeHotel.area || ''} ${activeHotel.city} ${activeHotel.state}`)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-black text-teal-800 hover:text-teal-950 bg-teal-100/70 hover:bg-teal-200/80 px-2.5 py-1 rounded-xl border border-teal-300 transition-colors cursor-pointer"
+                >
+                  <Compass className="w-3.5 h-3.5 text-teal-700" />
+                  <span>Google Maps ত চাওক</span>
+                  <ExternalLink className="w-3 h-3 text-teal-700" />
+                </a>
+
+                {sisterHotelsInDestination.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setActivePortalTab('hotels_directory')}
+                    className="text-xs font-bold text-teal-700 hover:text-teal-900 underline cursor-pointer"
+                  >
+                    {activeHotel.city}-ৰ অন্য {sisterHotelsInDestination.length}খন হোটেল চাওক
+                  </button>
+                )}
+              </div>
+
+              {/* Sister Hotels Quick Switcher in Same City */}
+              {sisterHotelsInDestination.length > 0 && (
+                <div className="pt-1.5 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto text-[11px]">
+                  <span className="text-[10px] font-bold text-slate-500 whitespace-nowrap">
+                    এই স্থানৰ অন্য হোটেল:
+                  </span>
+                  {sisterHotelsInDestination.map((sh) => (
+                    <button
+                      key={sh.id}
+                      type="button"
+                      onClick={() => onSelectHotel(sh.id)}
+                      className="px-2 py-0.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:border-teal-400 hover:text-teal-700 font-semibold whitespace-nowrap cursor-pointer transition-colors"
+                    >
+                      {sh.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* 4 HIGH-QUALITY PROPERTY IMAGES CAROUSEL / GRID */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
@@ -595,53 +839,81 @@ export const CustomerGuestView: React.FC<CustomerGuestViewProps> = ({
 
         {/* TAB 2: MULTI-VENDOR HOTELS DIRECTORY */}
         {activePortalTab === 'hotels_directory' && (
-          <div className="p-3.5 sm:p-4 space-y-3.5">
-            <div>
-              <h2 className="text-base font-black text-slate-900">
-                সকলো পঞ্জীকৃত হোটেল আৰু হোমষ্টে’ (All Verified Hotels)
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                অসম আৰু উত্তৰ-পূৰ্বাঞ্চলৰ নিৰাপদ আৰু আৰক্ষী-সত্যাপিত বাসস্থানসমূহ
-              </p>
+          <div className="p-3.5 sm:p-4 space-y-4">
+            <div className="flex items-start justify-between gap-2 flex-wrap">
+              <div>
+                <h2 className="text-base font-black text-slate-900 flex items-center gap-1.5">
+                  <Building2 className="w-4 h-4 text-teal-600" />
+                  <span>পঞ্জীকৃত হোটেল আৰু হোমষ্টে’ (Verified Hotels Directory)</span>
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  লোকেশ্যান, লেণ্ডমাৰ্ক আৰু সঠিক ঠিকনা অনুসৰি বাছনি কৰক
+                </p>
+              </div>
+
+              <span className="text-xs font-black bg-teal-50 text-teal-900 border border-teal-200 px-2.5 py-1 rounded-xl">
+                {filteredHotels.length} খন হোটেল উপলব্ধ
+              </span>
             </div>
 
-            {/* City Filter Pills */}
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                onClick={() => setCityFilter('all')}
-                className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
-                  cityFilter === 'all'
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-white border border-slate-200 text-slate-700'
-                }`}
-              >
-                সকলো চহৰ ({hotels.length})
-              </button>
-              {uniqueCities.map((city) => (
+            {/* Active Search & Location Filter Notification */}
+            {(selectedDestination !== 'all' || locationSearchQuery.trim()) && (
+              <div className="p-2.5 rounded-xl bg-teal-500/10 border border-teal-300 text-teal-900 text-xs flex items-center justify-between">
+                <div className="flex items-center gap-1.5 font-bold">
+                  <MapPin className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                  <span>
+                    ফিল্টাৰ: {selectedDestination !== 'all' ? selectedDestination : ''} {locationSearchQuery ? `"${locationSearchQuery}"` : ''}
+                  </span>
+                </div>
                 <button
-                  key={city}
-                  onClick={() => setCityFilter(city)}
-                  className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
-                    cityFilter.toLowerCase() === city.toLowerCase()
-                      ? 'bg-teal-600 text-white'
-                      : 'bg-white border border-slate-200 text-slate-700'
-                  }`}
+                  type="button"
+                  onClick={() => {
+                    setSelectedDestination('all');
+                    setLocationSearchQuery('');
+                  }}
+                  className="text-[11px] font-extrabold text-teal-700 hover:text-teal-950 underline cursor-pointer"
                 >
-                  {city}
+                  সকলো চাওক
                 </button>
-              ))}
-            </div>
+              </div>
+            )}
 
-            {/* Hotel Cards List */}
-            <div className="space-y-3">
+            {/* If no hotels match search */}
+            {filteredHotels.length === 0 && (
+              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-2">
+                <MapPin className="w-8 h-8 text-slate-400 mx-auto" />
+                <h3 className="text-sm font-bold text-slate-800">
+                  এই লোকেশ্যনত কোনো হোটেল পোৱা নগ'ল
+                </h3>
+                <p className="text-xs text-slate-500 max-w-xs mx-auto">
+                  অনুগ্ৰহ কৰি অন্য চহৰ বা লেণ্ডমাৰ্ক (কাজিৰঙা, গুৱাহাটী, তেজপুৰ, শ্বিলং আদি) বিচাৰি চাওক।
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedDestination('all');
+                    setLocationSearchQuery('');
+                  }}
+                  className="mt-2 px-3 py-1.5 rounded-xl bg-teal-600 text-white font-bold text-xs cursor-pointer"
+                >
+                  সকলো হোটেল চাওক
+                </button>
+              </div>
+            )}
+
+            {/* Hotel Cards List with Full Location Details */}
+            <div className="space-y-3.5">
               {filteredHotels.map((h) => {
                 const isCurrent = h.id === activeHotel.id;
                 const hImages = (h.images && h.images.length > 0) ? h.images : SAMPLE_HOTEL_IMAGES;
+                const startingPrice = getHotelStartingPrice(h.id);
+                const totalHotelRooms = getHotelRoomsCount(h.id);
+                const mapLink = h.mapLocationUrl || `https://maps.google.com/?q=${encodeURIComponent(`${h.name} ${h.area || ''} ${h.city} ${h.state}`)}`;
 
                 return (
                   <div
                     key={h.id}
-                    className={`bg-white rounded-2xl p-3.5 border-2 transition-all space-y-3 ${
+                    className={`bg-white rounded-2xl p-3.5 border-2 transition-all space-y-3 shadow-xs ${
                       isCurrent
                         ? 'border-teal-500 shadow-md ring-2 ring-teal-500/10'
                         : 'border-slate-200 hover:border-slate-300'
@@ -654,28 +926,48 @@ export const CustomerGuestView: React.FC<CustomerGuestViewProps> = ({
                         alt={h.name}
                         className="w-full h-full object-cover"
                       />
-                      <div className="absolute top-2 left-2 bg-slate-950/70 backdrop-blur-xs text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <div className="absolute top-2 left-2 bg-slate-950/80 backdrop-blur-xs text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
                         <MapPin className="w-3 h-3 text-teal-400" />
                         <span>{h.city}, {h.state}</span>
                       </div>
                       <div className="absolute bottom-2 right-2 bg-emerald-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-full shadow-xs flex items-center gap-1">
                         <ShieldCheck className="w-3 h-3 text-slate-950" />
-                        <span>KYC Verified</span>
+                        <span>KYC Verified Stay</span>
                       </div>
                     </div>
 
-                    <div>
-                      <div className="flex items-center justify-between gap-1">
-                        <h3 className="text-sm font-extrabold text-slate-900 leading-tight">
+                    {/* Hotel Info & Structured Location */}
+                    <div className="space-y-1">
+                      <div className="flex items-start justify-between gap-1.5">
+                        <h3 className="text-sm font-extrabold text-slate-900 leading-snug">
                           {h.name}
                         </h3>
                         {isCurrent && (
-                          <span className="text-[10px] font-black uppercase bg-teal-100 text-teal-800 px-2 py-0.5 rounded-md">
-                            বাছনি কৰা হৈছে
+                          <span className="text-[10px] font-black uppercase bg-teal-100 text-teal-800 px-2 py-0.5 rounded-md shrink-0">
+                            বৰ্তমান নিৰ্বাচিত
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
+
+                      {/* Explicit Locality & Landmark */}
+                      <div className="flex flex-col gap-0.5 text-xs text-slate-600 pt-0.5">
+                        <div className="flex items-center gap-1 font-semibold text-teal-800">
+                          <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                          <span>{h.city}, {h.state}</span>
+                          {h.area && <span>• {h.area}</span>}
+                        </div>
+                        {h.landmark && (
+                          <div className="text-[11px] text-slate-700 flex items-center gap-1 font-medium">
+                            <span>🏛️ লেণ্ডমাৰ্ক:</span>
+                            <span className="font-bold text-slate-900">{h.landmark}</span>
+                          </div>
+                        )}
+                        <div className="text-[10px] text-slate-500 truncate">
+                          {h.address}
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-slate-500 line-clamp-1 pt-0.5">
                         {h.description || h.tagline}
                       </p>
                     </div>
@@ -686,7 +978,7 @@ export const CustomerGuestView: React.FC<CustomerGuestViewProps> = ({
                         {h.amenities.slice(0, 3).map((a, idx) => (
                           <span
                             key={idx}
-                            className="text-[9px] font-semibold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-md"
+                            className="text-[9px] font-semibold bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded-md"
                           >
                             {a}
                           </span>
@@ -697,21 +989,42 @@ export const CustomerGuestView: React.FC<CustomerGuestViewProps> = ({
                       </div>
                     )}
 
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                      <div className="text-xs text-slate-500">
-                        মালিক: <span className="font-bold text-slate-800">{h.ownerName}</span>
+                    {/* Pricing, Room Count & Direct Action Buttons */}
+                    <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
+                      <div>
+                        <div className="text-xs font-black text-slate-900">
+                          ₹{startingPrice.toLocaleString()}{' '}
+                          <span className="text-[10px] font-normal text-slate-500">/ নিশাৰ পৰা</span>
+                        </div>
+                        <div className="text-[10px] text-teal-700 font-semibold">
+                          {totalHotelRooms} টা কোঠা উপলব্ধ
+                        </div>
                       </div>
 
-                      <button
-                        onClick={() => {
-                          onSelectHotel(h.id);
-                          setActivePortalTab('browse');
-                        }}
-                        className="py-1.5 px-3 rounded-xl bg-[#0B2545] hover:bg-[#123661] text-white font-extrabold text-xs flex items-center gap-1 cursor-pointer transition-colors"
-                      >
-                        <span>কোঠা চাওক</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <a
+                          href={mapLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-1.5 rounded-xl border border-slate-300 hover:border-teal-400 text-slate-700 hover:text-teal-700 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                          title="Google Maps ত চাওক"
+                        >
+                          <Compass className="w-3.5 h-3.5 text-teal-600" />
+                          <span className="hidden sm:inline">মেপ</span>
+                          <ExternalLink className="w-2.5 h-2.5 text-slate-400" />
+                        </a>
+
+                        <button
+                          onClick={() => {
+                            onSelectHotel(h.id);
+                            setActivePortalTab('browse');
+                          }}
+                          className="py-1.5 px-3 rounded-xl bg-[#0B2545] hover:bg-[#123661] text-white font-extrabold text-xs flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                        >
+                          <span>কোঠা চাওক & বুক কৰক</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );

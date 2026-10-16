@@ -93,9 +93,12 @@ export interface HotelProfile {
   whatsappNumber: string;
   email: string;
   address: string;
-  city: string;
+  city: string; // Destination / City (e.g. Kaziranga, Guwahati, Tezpur)
+  area?: string; // Locality / Range (e.g. Kohora, Beltola, Paltan Bazar)
+  landmark?: string; // Prominent landmark (e.g. Near Safari Gate, Near Kamakhya)
   state: string;
   pincode: string;
+  mapLocationUrl?: string; // Optional Google Maps location link
   currency: string;
   upiId: string;
   checkInStandardTime: string;
@@ -136,8 +139,11 @@ export interface FirstTimeRegistrationPayload {
   email?: string;
   address: string;
   city: string;
+  area?: string;
+  landmark?: string;
   state: string;
   pincode?: string;
+  mapLocationUrl?: string;
   description?: string;
   images: string[];
   amenities: string[];

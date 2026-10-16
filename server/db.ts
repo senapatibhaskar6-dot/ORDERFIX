@@ -93,10 +93,16 @@ export async function initDatabase() {
         police_station_whatsapp VARCHAR(50),
         police_station_incharge VARCHAR(255),
         hotel_license_number VARCHAR(100),
+        area VARCHAR(255),
+        landmark VARCHAR(255),
+        map_location_url TEXT,
         is_registered BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
       );
+      ALTER TABLE hotels ADD COLUMN IF NOT EXISTS area VARCHAR(255);
+      ALTER TABLE hotels ADD COLUMN IF NOT EXISTS landmark VARCHAR(255);
+      ALTER TABLE hotels ADD COLUMN IF NOT EXISTS map_location_url TEXT;
     `);
 
     // Backward compatibility table view / alias

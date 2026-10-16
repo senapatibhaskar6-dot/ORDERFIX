@@ -120,6 +120,9 @@ export const DEFAULT_HOTELS: HotelProfile[] = [
     email: 'contact@seashellpalms.in',
     address: 'Near Brahmaputra Heritage / Beach Road, Uzan Bazar',
     city: 'Guwahati',
+    area: 'Uzan Bazar / Riverside',
+    landmark: 'Near Brahmaputra Heritage & Gauhati High Court',
+    mapLocationUrl: 'https://maps.google.com/?q=Uzan+Bazar+Guwahati+Assam',
     state: 'Assam',
     pincode: '781001',
     currency: '₹',
@@ -154,6 +157,9 @@ export const DEFAULT_HOTELS: HotelProfile[] = [
     email: 'stay@kazirangawildorchid.com',
     address: 'Kohora Central Range, Near Safari Gate',
     city: 'Kaziranga',
+    area: 'Kohora Central Range',
+    landmark: 'Near Main Jeep Safari Entry Gate 1',
+    mapLocationUrl: 'https://maps.google.com/?q=Kohora+Kaziranga+National+Park',
     state: 'Assam',
     pincode: '785609',
     currency: '₹',
@@ -176,12 +182,124 @@ export const DEFAULT_HOTELS: HotelProfile[] = [
     hotelLicenseNumber: 'ASM/GLG/HTL/2024-411',
     isRegistered: true,
     createdAt: '2026-09-20T11:30:00.000Z'
+  },
+  {
+    id: 'htl-tezpur-03',
+    name: 'Agnigarh Hillview Retreat',
+    tagline: 'Historic Riverside Cultural Homestay',
+    description: 'Scenic retreat overlooking the mighty Brahmaputra river and Agnigarh archaeological park in Tezpur. Perfect gateway to Bhalukpong and Tawang.',
+    ownerName: 'Mridul Hazarika',
+    phone: '+91 94352 11223',
+    whatsappNumber: '+91 94352 11223',
+    email: 'contact@agnigarhretreat.in',
+    address: 'Mahabhairab Road, Near Agnigarh Park',
+    city: 'Tezpur',
+    area: 'Mahabhairab / Agnigarh',
+    landmark: 'Overlooking Agnigarh Park & Kolia Bhomora Bridge',
+    mapLocationUrl: 'https://maps.google.com/?q=Agnigarh+Tezpur+Assam',
+    state: 'Assam',
+    pincode: '784001',
+    currency: '₹',
+    upiId: 'agnigarh@oksbi',
+    checkInStandardTime: '12:00 PM',
+    checkOutStandardTime: '11:00 AM',
+    images: SAMPLE_HOTEL_IMAGES,
+    amenities: ['AC', 'Free High-speed Wi-Fi', 'Free Parking', 'Geyser / Hot Water', 'Smart TV', 'River View Balcony', 'Traditional Kitchen'],
+    entryFeePaid: true,
+    entryFeeAmount: 99,
+    entryFeeTxnId: 'ORD-REG-99-77192',
+    entryFeePaidAt: '2026-09-25',
+    subscriptionPlan: 'trial_free_month',
+    subscriptionExpiresAt: '2026-10-25',
+    trialDaysLeft: 29,
+    policeStationName: 'Tezpur Sadar Police Station, Sonitpur',
+    policeStationWhatsApp: '+91 94350 33221',
+    policeStationEmail: 'tezpur-ps@assampolice.gov.in',
+    policeStationIncharge: 'Inspector K. Kalita, OC Tezpur',
+    hotelLicenseNumber: 'ASM/SNP/HTL/2024-602',
+    isRegistered: true,
+    createdAt: '2026-09-25T09:00:00.000Z'
+  },
+  {
+    id: 'htl-shillong-04',
+    name: 'Pine Ridge Cloud Retreat & Homestay',
+    tagline: 'Misty Hill Station Stays & Scottish Pines',
+    description: 'Boutique hilltop homestay located right above Police Bazar in Shillong. Features heated wooden floors, panoramic pine valley views, organic Khasi meals, and tour guidance to Cherrapunji and Dawki.',
+    ownerName: 'Daphishi Lyngdoh',
+    phone: '+91 98630 88219',
+    whatsappNumber: '+91 98630 88219',
+    email: 'info@pineridgeshillong.in',
+    address: 'Upper Shillong Road, Near Ward’s Lake',
+    city: 'Shillong',
+    area: 'Police Bazar / Upper Shillong',
+    landmark: 'Near Ward’s Lake & Don Bosco Museum',
+    mapLocationUrl: 'https://maps.google.com/?q=Police+Bazar+Shillong+Meghalaya',
+    state: 'Meghalaya',
+    pincode: '793001',
+    currency: '₹',
+    upiId: 'pineridge@okaxis',
+    checkInStandardTime: '01:00 PM',
+    checkOutStandardTime: '11:00 AM',
+    images: SAMPLE_HOTEL_IMAGES,
+    amenities: ['Room Heater', 'Free High-speed Wi-Fi', 'Free Parking', 'Geyser / Hot Water', 'Mountain View Balcony', 'Fireplace Lounge'],
+    entryFeePaid: true,
+    entryFeeAmount: 99,
+    entryFeeTxnId: 'ORD-REG-99-66120',
+    entryFeePaidAt: '2026-09-28',
+    subscriptionPlan: 'trial_free_month',
+    subscriptionExpiresAt: '2026-10-28',
+    trialDaysLeft: 30,
+    policeStationName: 'Sadar Police Station, Shillong',
+    policeStationWhatsApp: '+91 94361 22334',
+    policeStationEmail: 'sadar-shillong@police.gov.in',
+    policeStationIncharge: 'Inspector S. Roy, OC Sadar',
+    hotelLicenseNumber: 'MEG/SHL/HTL/2024-118',
+    isRegistered: true,
+    createdAt: '2026-09-28T08:00:00.000Z'
+  },
+  {
+    id: 'htl-majuli-05',
+    name: 'Brahmaputra Satra Eco Heritage',
+    tagline: 'River Island Bamboo Cottages & Culture',
+    description: 'Traditional Assamese bamboo cottages on the world’s largest river island Majuli. Located minutes from historic Garmur and Auniati Satras, offering authentic Mishing tribal thali and bicycle rentals.',
+    ownerName: 'Diganta Deka',
+    phone: '+91 94353 77441',
+    whatsappNumber: '+91 94353 77441',
+    email: 'stay@majuliecoheritage.com',
+    address: 'Garmur Satra Road, Near Kamalabari Ghat',
+    city: 'Majuli',
+    area: 'Garmur / Kamalabari',
+    landmark: 'Near Garmur Satra Gate & Kamalabari Ferry Ghat',
+    mapLocationUrl: 'https://maps.google.com/?q=Garmur+Majuli+Assam',
+    state: 'Assam',
+    pincode: '785104',
+    currency: '₹',
+    upiId: 'majulieco@upi',
+    checkInStandardTime: '12:00 PM',
+    checkOutStandardTime: '11:00 AM',
+    images: KAZIRANGA_HOTEL_IMAGES,
+    amenities: ['Free High-speed Wi-Fi', 'Free Parking', 'Geyser / Hot Water', 'Organic Garden Dining', 'Bicycle Rental', 'Cultural Tour Guide'],
+    entryFeePaid: true,
+    entryFeeAmount: 99,
+    entryFeeTxnId: 'ORD-REG-99-55109',
+    entryFeePaidAt: '2026-09-30',
+    subscriptionPlan: 'trial_free_month',
+    subscriptionExpiresAt: '2026-10-30',
+    trialDaysLeft: 30,
+    policeStationName: 'Garmur Police Station, Majuli',
+    policeStationWhatsApp: '+91 94350 77889',
+    policeStationEmail: 'garmur-ps@assampolice.gov.in',
+    policeStationIncharge: 'Inspector M. Bora, OC Garmur',
+    hotelLicenseNumber: 'ASM/MJL/HTL/2024-301',
+    isRegistered: true,
+    createdAt: '2026-09-30T10:00:00.000Z'
   }
 ];
 
 export const DEFAULT_HOTEL: HotelProfile = DEFAULT_HOTELS[0];
 
 export const DEFAULT_ROOMS: Room[] = [
+  // Guwahati (Seashell Palms)
   {
     id: '101',
     hotelId: 'htl-seashell-01',
@@ -269,6 +387,135 @@ export const DEFAULT_ROOMS: Room[] = [
     basePrice: 2400,
     capacity: 2,
     amenities: ['AC', 'Sunset View', 'Smart TV', 'Free Wi-Fi']
+  },
+
+  // Kaziranga Wild Orchid Heritage Lodge
+  {
+    id: '201',
+    hotelId: 'htl-kaziranga-02',
+    roomNumber: '201',
+    name: 'Rhino View Cottage',
+    type: 'Cottage',
+    floor: 1,
+    basePrice: 2800,
+    capacity: 2,
+    amenities: ['AC', 'Tea Garden Balcony', 'Hot Geyser', 'Free Wi-Fi', 'Safari Desk']
+  },
+  {
+    id: '202',
+    hotelId: 'htl-kaziranga-02',
+    roomNumber: '202',
+    name: 'Forest Haven Deluxe',
+    type: 'Deluxe AC',
+    floor: 1,
+    basePrice: 2500,
+    capacity: 2,
+    amenities: ['AC', 'King Bed', 'Attached Bath', 'Power Backup']
+  },
+  {
+    id: '203',
+    hotelId: 'htl-kaziranga-02',
+    roomNumber: '203',
+    name: 'Jungle Heritage Suite',
+    type: 'Family Suite',
+    floor: 2,
+    basePrice: 4200,
+    capacity: 4,
+    amenities: ['2 Bedrooms', 'Living Room', 'Jungle View', 'Bonfire Access']
+  },
+  {
+    id: '204',
+    hotelId: 'htl-kaziranga-02',
+    roomNumber: '204',
+    name: 'Kohora Standard Room',
+    type: 'Standard',
+    floor: 1,
+    basePrice: 1800,
+    capacity: 2,
+    amenities: ['Fan', 'Queen Bed', 'Attached Bath', 'Free Wi-Fi']
+  },
+
+  // Tezpur Agnigarh Hillview Retreat
+  {
+    id: '301',
+    hotelId: 'htl-tezpur-03',
+    roomNumber: '301',
+    name: 'Brahmaputra Riverside Deluxe',
+    type: 'Deluxe AC',
+    floor: 1,
+    basePrice: 2400,
+    capacity: 2,
+    amenities: ['AC', 'River View Balcony', 'Geyser', 'Smart TV']
+  },
+  {
+    id: '302',
+    hotelId: 'htl-tezpur-03',
+    roomNumber: '302',
+    name: 'Agnigarh Heritage Suite',
+    type: 'Family Suite',
+    floor: 2,
+    basePrice: 3600,
+    capacity: 4,
+    amenities: ['2 Bedrooms', 'Hill View', 'Free Wi-Fi', 'Pantry']
+  },
+  {
+    id: '303',
+    hotelId: 'htl-tezpur-03',
+    roomNumber: '303',
+    name: 'Sonitpur Standard AC',
+    type: 'Standard',
+    floor: 1,
+    basePrice: 1700,
+    capacity: 2,
+    amenities: ['AC', 'Attached Bath', 'Work Desk']
+  },
+
+  // Shillong Pine Ridge Cloud Retreat
+  {
+    id: '401',
+    hotelId: 'htl-shillong-04',
+    roomNumber: '401',
+    name: 'Pine Valley Wood Cottage',
+    type: 'Cottage',
+    floor: 1,
+    basePrice: 3200,
+    capacity: 2,
+    amenities: ['Room Heater', 'Pine View Balcony', 'Geyser', 'Wooden Interiors']
+  },
+  {
+    id: '402',
+    hotelId: 'htl-shillong-04',
+    roomNumber: '402',
+    name: 'Cloud Nine Deluxe',
+    type: 'Deluxe AC',
+    floor: 2,
+    basePrice: 2800,
+    capacity: 2,
+    amenities: ['Heater', 'Valley View', 'Smart TV', 'Free Wi-Fi']
+  },
+
+  // Majuli Brahmaputra Satra Eco Heritage
+  {
+    id: '501',
+    hotelId: 'htl-majuli-05',
+    roomNumber: '501',
+    name: 'Mishing Tribal Stilt Cottage',
+    type: 'Cottage',
+    floor: 1,
+    basePrice: 2200,
+    capacity: 2,
+    amenities: ['Bamboo Architecture', 'Attached Bath', 'Island Garden View', 'Organic Tea']
+  },
+  {
+    id: '502',
+    hotelId: 'htl-majuli-05',
+    roomNumber: '502',
+    name: 'Satra Heritage Room',
+    type: 'Standard',
+    floor: 1,
+    basePrice: 1500,
+    capacity: 2,
+    amenities: ['Queen Bed', 'Attached Bath', 'Bicycle Access']
   }
 ];
 
@@ -319,7 +566,17 @@ export function loadHotels(): HotelProfile[] {
     const raw = localStorage.getItem(STORAGE_KEYS.HOTELS);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Merge missing default hotels if any
+        const existingIds = new Set(parsed.map((h: HotelProfile) => h.id));
+        const missing = DEFAULT_HOTELS.filter((dh) => !existingIds.has(dh.id));
+        if (missing.length > 0) {
+          const merged = [...parsed, ...missing];
+          saveHotels(merged);
+          return merged;
+        }
+        return parsed;
+      }
     }
   } catch (e) {
     console.error('Failed to load multi-vendor hotels', e);
@@ -503,7 +760,19 @@ export function generateInitialBookings(): Booking[] {
 export function loadRooms(): Room[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.ROOMS);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const existingIds = new Set(parsed.map((r: Room) => r.id));
+        const missing = DEFAULT_ROOMS.filter((dr) => !existingIds.has(dr.id));
+        if (missing.length > 0) {
+          const merged = [...parsed, ...missing];
+          saveRooms(merged);
+          return merged;
+        }
+        return parsed;
+      }
+    }
   } catch (e) {
     console.error('Failed to load rooms from storage', e);
   }
